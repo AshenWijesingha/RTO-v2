@@ -1,0 +1,76 @@
+:root {
+  color-scheme: dark;
+  --bg: #05070d;
+  --card: #111624;
+  --text: #ebf1ff;
+  --muted: #8ea0c5;
+  --accent: #39ffc1;
+  --danger: #ff5d7a;
+  --line: #23304d;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at top, #15213d, var(--bg));
+  color: var(--text);
+}
+
+.page { max-width: 1100px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1rem; }
+.card {
+  background: linear-gradient(160deg, rgba(17,22,36,.95), rgba(10,14,24,.95));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+}
+.hero { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+h1 { margin: 0.25rem 0 0.5rem; font-size: clamp(1.6rem, 3vw, 2.25rem); }
+.eyebrow { text-transform: uppercase; letter-spacing: .08rem; color: var(--accent); font-size: .75rem; margin: 0; }
+.muted { color: var(--muted); }
+.upload {
+  border: 1px dashed var(--accent);
+  border-radius: 10px;
+  padding: .75rem 1rem;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+}
+.upload input { display: none; }
+.error { color: var(--danger); margin: 0; }
+.empty pre {
+  white-space: pre-wrap;
+  max-height: 14rem;
+  overflow: auto;
+  background: #0a1020;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .75rem;
+}
+.grid { display: grid; gap: 1rem; }
+.stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.stats p { margin: 0; color: var(--muted); }
+.stats strong { font-size: 1.75rem; }
+.danger strong { color: var(--danger); }
+.split { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.host-list { display: grid; gap: .5rem; margin-top: .75rem; }
+.host {
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .6rem .7rem;
+  background: #0d1323;
+  color: var(--text);
+}
+.host.active { border-color: var(--accent); }
+.host small { display: block; color: var(--muted); margin-top: .2rem; }
+h2 { margin-top: 0; }
+
+.table-wrap { overflow: auto; }
+table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+th, td { border-bottom: 1px solid var(--line); padding: .55rem; text-align: left; font-size: .92rem; }
+th { color: var(--muted); font-weight: 600; }
+
+@media (max-width: 720px) {
+  .hero { flex-direction: column; align-items: stretch; }
+}
