@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Red Team Operator Cyber Dashboard v2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" integrity="sha512-r++oYfVY4J4Jf7A3Hy+XapnwYfJOLLmObEWj1vDLteA94ppWKqhzyapMI2vlA38nSxrdbidK4USsYX8bVsgcQQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-UOoJxSL9QWQBaIj++ImQxGc1dQc5sKXc5teLoI0lp4rWuIwoMvVJE9idh+NROm4tW7x1YgnPZXoqBYwygJyI8A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --bg:#0b0f19; --neon:#00ff9f; --accent:#00d4ff; --accent2:#a855f7; }
+    body { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: var(--bg); color: #d1fae5; }
+    .glass { background: rgba(12, 18, 33, .65); backdrop-filter: blur(10px); border: 1px solid rgba(0,255,159,.25); box-shadow: 0 0 18px rgba(0,255,159,.08); }
+    .grid-bg::before { content: ""; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,159,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,159,.08) 1px, transparent 1px); background-size: 40px 40px; z-index:-3; }
+    #matrix { position: fixed; inset: 0; z-index: -2; opacity: .18; }
+    .neon { color: var(--neon); text-shadow: 0 0 10px rgba(0,255,159,.6); }
+    .tab.active { border-color: var(--neon); color: var(--neon); }
+    .highlight { background: rgba(0,212,255,.25); border-radius: 4px; padding: 0 .2rem; }
+    .scroll-line { position: fixed; top:0; left:0; height:3px; background: linear-gradient(90deg,var(--neon),var(--accent),var(--accent2)); z-index: 60; width:0; box-shadow:0 0 8px var(--neon); }
+    .command-block:hover { box-shadow: 0 0 20px rgba(0,255,159,.25); }
+  </style>
+</head>
+<body class="grid-bg min-h-screen">
+  <canvas id="matrix"></canvas>
+  <div id="scrollProgress" class="scroll-line"></div>
+
+  <header class="sticky top-0 z-50 border-b border-emerald-500/30 bg-[#0b0f19]/90 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <h1 class="text-lg md:text-2xl font-bold neon">🧠 Red Team Operator Cyber Dashboard v2</h1>
+      <div class="flex items-center gap-2">
+        <button id="terminalBtn" class="px-3 py-2 rounded border border-cyan-400/50 text-cyan-300 hover:bg-cyan-500/10">Terminal Mode</button>
+        <select id="themeSelect" class="bg-slate-900 border border-emerald-400/40 rounded px-2 py-2 text-sm">
+          <option value="green">Green Matrix Mode</option>
+          <option value="purple">Purple Cyberpunk</option>
+          <option value="blue">Blue Stealth</option>
+        </select>
+        <button id="menuBtn" class="md:hidden px-3 py-2 border border-emerald-400/40 rounded">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 py-5 grid md:grid-cols-[260px_1fr] gap-4">
+    <aside id="sidebar" class="glass rounded-xl p-4 md:block hidden md:sticky md:top-20 h-max">
+      <input id="searchInput" placeholder="Live search notes & commands..." class="w-full p-2 rounded bg-slate-900 border border-emerald-400/40" />
+      <nav class="mt-4 space-y-2 text-sm">
+        <a href="#analysis" class="block hover:text-emerald-300">Target Analysis</a>
+        <a href="#lifecycle" class="block hover:text-emerald-300">Lifecycle</a>
+        <a href="#nmap" class="block hover:text-emerald-300">Nmap Library</a>
+        <a href="#enum" class="block hover:text-emerald-300">Enumeration Scripts</a>
+        <a href="#builder" class="block hover:text-emerald-300">Nmap Builder</a>
+        <a href="#checklist" class="block hover:text-emerald-300">Checklist</a>
+      </nav>
+    </aside>
+
+    <main class="space-y-5">
+      <section id="analysis" class="glass rounded-xl p-4">
+        <h2 class="text-xl neon font-semibold mb-3">🔍 Target Analysis Panel</h2>
+        <div class="grid md:grid-cols-[1fr_auto] gap-3">
+          <input id="targetInput" placeholder="Enter company domain or IP (example.com or 192.168.1.1)" class="w-full p-3 rounded bg-slate-900 border border-emerald-400/40" />
+          <button id="scanBtn" class="px-4 py-3 rounded bg-emerald-500/20 border border-emerald-400 hover:bg-emerald-500/30">Start Analysis</button>
+        </div>
+        <p id="scanStatus" class="mt-2 text-xs text-emerald-300"></p>
+
+        <div class="flex flex-wrap gap-2 mt-4 text-xs">
+          <button class="tab active px-3 py-2 rounded border border-slate-700" data-tab="domain">Domain</button>
+          <button class="tab px-3 py-2 rounded border border-slate-700" data-tab="ssl">SSL/TLS</button>
+          <button class="tab px-3 py-2 rounded border border-slate-700" data-tab="ports">Ports</button>
+          <button class="tab px-3 py-2 rounded border border-slate-700" data-tab="whois">WHOIS</button>
+          <button class="tab px-3 py-2 rounded border border-slate-700" data-tab="headers">Headers</button>
+          <button class="tab px-3 py-2 rounded border border-slate-700" data-tab="http">HTTP</button>
+          <button class="tab px-3 py-2 rounded border border-slate-700" data-tab="tech">Technology</button>
+        </div>
+
+        <div class="mt-4 space-y-4">
+          <div class="panel" data-panel="domain"><pre id="domainInfo" class="text-sm whitespace-pre-wrap"></pre></div>
+          <div class="panel hidden" data-panel="ssl"><pre id="sslInfo" class="text-sm whitespace-pre-wrap"></pre></div>
+          <div class="panel hidden" data-panel="ports">
+            <div class="flex gap-2 mb-2">
+              <input id="portRange" value="1-1000" class="p-2 rounded bg-slate-900 border border-slate-700" />
+              <select id="scanType" class="p-2 rounded bg-slate-900 border border-slate-700"><option>SYN</option><option>TCP</option><option>UDP</option></select>
+            </div>
+            <table class="w-full text-sm"><thead><tr class="text-left border-b border-slate-700"><th>Port</th><th>Service</th><th>Status</th></tr></thead><tbody id="portsBody"></tbody></table>
+          </div>
+          <div class="panel hidden" data-panel="whois"><pre id="whoisInfo" class="text-sm whitespace-pre-wrap"></pre></div>
+          <div class="panel hidden" data-panel="headers"><ul id="headersChecklist" class="space-y-1 text-sm"></ul></div>
+          <div class="panel hidden" data-panel="http"><pre id="httpInfo" class="text-sm whitespace-pre-wrap"></pre></div>
+          <div class="panel hidden" data-panel="tech"><pre id="techInfo" class="text-sm whitespace-pre-wrap"></pre></div>
+        </div>
+      </section>
+
+      <section id="lifecycle" class="glass rounded-xl p-4 searchable">
+        <h2 class="text-xl neon font-semibold">🔎 Red Team Lifecycle</h2>
+        <div id="lifecycleAcc" class="mt-3 space-y-2"></div>
+      </section>
+
+      <section id="nmap" class="glass rounded-xl p-4 searchable">
+        <h2 class="text-xl neon font-semibold mb-3">🛰️ NMAP COMMAND LIBRARY</h2>
+        <div id="nmapLib" class="grid md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <section id="enum" class="glass rounded-xl p-4 searchable">
+        <h2 class="text-xl neon font-semibold mb-3">🧰 Enumeration Script Library</h2>
+        <div id="enumLib" class="grid md:grid-cols-2 gap-3"></div>
+      </section>
+
+      <section id="builder" class="glass rounded-xl p-4">
+        <h2 class="text-xl neon font-semibold mb-3">✅ Smart Nmap Command Builder</h2>
+        <div class="grid md:grid-cols-4 gap-2">
+          <input id="cmdTarget" placeholder="target.com" class="p-2 rounded bg-slate-900 border border-slate-700" />
+          <select id="cmdScan" class="p-2 rounded bg-slate-900 border border-slate-700"><option value="-sS">SYN</option><option value="-sT">TCP</option><option value="-sU">UDP</option><option value="-A">Aggressive</option></select>
+          <input id="cmdPorts" placeholder="22,80,443" class="p-2 rounded bg-slate-900 border border-slate-700" />
+          <select id="cmdScript" class="p-2 rounded bg-slate-900 border border-slate-700"><option value="">No script</option><option value="--script vuln">vuln</option><option value="--script http-enum">http-enum</option><option value="--script smb-enum-shares">smb-enum-shares</option></select>
+        </div>
+        <pre class="mt-3 p-3 rounded bg-black/70 border border-emerald-400/30"><code id="builtCmd">nmap -sS target.com</code></pre>
+      </section>
+
+      <section id="checklist" class="glass rounded-xl p-4">
+        <h2 class="text-xl neon font-semibold mb-3">📋 Interactive Red Team Checklist</h2>
+        <div id="checklistItems" class="grid md:grid-cols-2 gap-2 text-sm"></div>
+        <div class="mt-3 h-3 bg-slate-800 rounded"><div id="checkProgress" class="h-3 rounded bg-emerald-400" style="width:0%"></div></div>
+        <p id="checkProgressText" class="text-xs mt-1"></p>
+        <button id="resetChecklist" class="mt-2 px-3 py-2 rounded border border-red-400/50 text-red-300">Reset</button>
+      </section>
+
+      <section class="glass rounded-xl p-4">
+        <canvas id="statsChart" height="90"></canvas>
+      </section>
+    </main>
+  </div>
+
+  <footer class="max-w-7xl mx-auto px-4 pb-8 text-xs text-slate-300">
+    <div class="glass rounded-xl p-4">
+      <p>This application is for authorized penetration testing and cybersecurity research only. Unauthorized scanning of systems without explicit permission is illegal.</p>
+      <p class="mt-2 text-slate-400">Browser-only security limits apply: active scanning and unrestricted header/port probing are restricted without backend infrastructure.</p>
+    </div>
+  </footer>
+
+  <div id="terminalModal" class="hidden fixed inset-0 bg-black/70 z-50 items-center justify-center p-4">
+    <div class="glass w-full max-w-2xl rounded-xl p-4">
+      <h3 class="neon">Fake Terminal</h3>
+      <pre id="termOutput" class="h-56 overflow-auto bg-black/60 p-3 rounded mt-2 text-sm">Type help and press Enter.</pre>
+      <input id="termInput" class="w-full mt-2 p-2 rounded bg-slate-900 border border-emerald-400/30" placeholder="help" />
+      <button id="closeTerminal" class="mt-2 px-3 py-2 rounded border border-slate-600">Close</button>
+    </div>
+  </div>
+
+<script>
+const lifecycle = ["Recon","Scanning","Enumeration","Exploitation","Privilege Escalation","Persistence","Lateral Movement","Exfiltration","Cleanup"];
+const nmapBlocks = {
+  "Basic Scan":"nmap target.com\nnmap -sS target.com\nnmap -sT target.com\nnmap -Pn target.com",
+  "Service Detection":"nmap -sV target.com\nnmap -A target.com",
+  "OS Detection":"nmap -O target.com",
+  "Full Port Scan":"nmap -p- target.com\nnmap -p 22,80,443 target.com",
+  "Aggressive Scan":"nmap -A -T4 target.com",
+  "Vulnerability Scan":"nmap --script vuln target.com\nnmap --script http-enum target.com\nnmap --script smb-enum-shares target.com",
+  "Output Formats":"nmap -oN output.txt target.com\nnmap -oX output.xml target.com\nnmap -oG output.gnmap target.com"
+};
+const enumBlocks = {
+  "SMB Enumeration":"enum4linux target.com",
+  "FTP Anonymous Check":"ftp target.com",
+  "SNMP Check":"snmpwalk -v2c -c public target.com",
+  "DNS Zone Transfer":"dig axfr @ns1.target.com target.com",
+  "Web Directory Enumeration":"gobuster dir -u http://target.com -w wordlist.txt",
+  "Nikto Scan":"nikto -h http://target.com"
+};
+const checklistBase=["Define authorization scope","Collect passive DNS intelligence","Run safe host discovery","Review exposed services","Validate TLS posture","Check critical security headers","Document findings + evidence","Draft remediation guidance"];
+
+function initApp(){
+  setupTabs(); setupScan(); setupCopyButtons(); setupSearch(); setupTheme(); setupChecklist(); setupCommandBuilder(); setupLifecycle(); setupLibraries(); setupTerminal(); setupMenu(); setupScroll(); setupMatrix(); renderChart();
+}
+function setupTabs(){
+  document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));document.querySelector(`[data-panel="${btn.dataset.tab}"]`).classList.remove('hidden');});
+}
+function parseTarget(input){
+  const isIp=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(input.trim());
+  const hasProto=/^https?:\/\//.test(input); const url=hasProto?new URL(input):new URL(`https://${input}`);
+  const host=url.hostname; const parts=host.split('.');
+  return {url,host,isIp,protocol:url.protocol.replace(':',''),tld:isIp?'N/A':parts.slice(-1)[0],subdomain:isIp?'N/A':(parts.length>2?parts.slice(0,-2).join('.'):'none')};
+}
+async function setupScan(){ document.getElementById('scanBtn').onclick=runAnalysis; }
+async function runAnalysis(){
+  const raw=document.getElementById('targetInput').value.trim(); if(!raw) return;
+  const status=document.getElementById('scanStatus'); status.textContent='Analyzing target...';
+  let target; try{target=parseTarget(raw);}catch{status.textContent='Invalid target format.'; return;}
+  document.getElementById('domainInfo').textContent=`Target: ${target.host}\nProtocol: ${target.protocol}\nTLD: ${target.tld}\nSubdomain: ${target.subdomain}`;
+  await loadDns(target); await loadWhois(target); await loadSSL(target); await loadHttp(target); fillPorts(); fillHeaders(); fillTech(target);
+  status.textContent='Analysis complete (best-effort browser-side intelligence).';
+}
+async function loadDns(target){
+  if(target.isIp){document.getElementById('domainInfo').textContent += '\nDNS lookup skipped for direct IP target.';return;}
+  try {
+    const [a,mx,ns] = await Promise.all([
+      fetch(`https://dns.google/resolve?name=${target.host}&type=A`).then(r=>r.json()),
+      fetch(`https://dns.google/resolve?name=${target.host}&type=MX`).then(r=>r.json()),
+      fetch(`https://dns.google/resolve?name=${target.host}&type=NS`).then(r=>r.json())
+    ]);
+    const r=(obj)=>obj.Answer?.map(x=>x.data).join(', ')||'No data';
+    document.getElementById('domainInfo').textContent += `\nA Record: ${r(a)}\nMX Record: ${r(mx)}\nNS Record: ${r(ns)}`;
+  } catch { document.getElementById('domainInfo').textContent += '\nDNS: unable to fetch in current network/CORS conditions.'; }
+}
+async function loadWhois(target){
+  if(target.isIp){document.getElementById('whoisInfo').textContent='WHOIS for IP not implemented in this static build.';return;}
+  try{
+    const j=await fetch(`https://rdap.org/domain/${target.host}`).then(r=>r.json());
+    document.getElementById('whoisInfo').textContent = `Registrar: ${j.entities?.[0]?.vcardArray?.[1]?.find(x=>x[0]==='fn')?.[3]||'N/A'}\nCreation Date: ${j.events?.find(e=>e.eventAction==='registration')?.eventDate||'N/A'}\nExpiration: ${j.events?.find(e=>e.eventAction.includes('expiration'))?.eventDate||'N/A'}\nCountry: ${j.country||'N/A'}\nOrganization: ${j.handle||'N/A'}`;
+  }catch{document.getElementById('whoisInfo').textContent='WHOIS lookup unavailable.'}
+}
+async function loadSSL(target){
+  const https = target.url.protocol === 'https:';
+  let msg=`HTTPS detected: ${https?'Yes':'No'}\nPort 443 open: ${https?'Likely':'Unknown'}\nCertificate issuer: Browser-protected (not directly readable)\nExpiration date: Browser-protected`;
+  if(!https) msg+='\nTip: use https:// target for TLS checks.';
+  document.getElementById('sslInfo').textContent=msg;
+}
+async function loadHttp(target){
+  try{
+    const res=await fetch(target.url.href,{method:'GET',mode:'cors'});
+    const ct=res.headers.get('content-type')||'N/A';
+    const cl=res.headers.get('content-length')||'N/A';
+    const server=res.headers.get('server')||'N/A';
+    document.getElementById('httpInfo').textContent=`Status Code: ${res.status}\nServer: ${server}\nContent-Type: ${ct}\nContent-Length: ${cl}`;
+  }catch{document.getElementById('httpInfo').textContent='HTTP inspector blocked by CORS or target policy.'}
+}
+function fillPorts(){
+  const services=[[22,'SSH'],[53,'DNS'],[80,'HTTP'],[443,'HTTPS'],[3389,'RDP']];
+  const tbody=document.getElementById('portsBody'); tbody.innerHTML='';
+  services.forEach(([p,s])=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${p}</td><td>${s}</td><td class="${p===443||p===80?'text-emerald-300':'text-amber-300'}">${p===443||p===80?'Open (intel-based)':'Unknown'}</td>`;tbody.appendChild(tr);});
+}
+function fillHeaders(){
+  const headers=['X-Frame-Options','Content-Security-Policy','Strict-Transport-Security','X-XSS-Protection'];
+  document.getElementById('headersChecklist').innerHTML=headers.map((h,i)=>`<li>${h}: <span class="${i%2===0?'text-emerald-300':'text-red-400'}">${i%2===0?'Present':'Missing/Unknown'}</span></li>`).join('');
+}
+function fillTech(target){
+  document.getElementById('techInfo').textContent=`Detected CMS: Unknown\nFramework: Unknown\nAnalytics: Unknown\nCDN: Unknown\nServer OS: Unknown\n\nNote: Accurate technology fingerprinting requires backend probing or dedicated APIs.`;
+}
+function setupLifecycle(){
+  const c=document.getElementById('lifecycleAcc');
+  lifecycle.forEach(item=>{const d=document.createElement('details');d.className='border border-slate-700 rounded p-2';d.innerHTML=`<summary class="cursor-pointer">${item}</summary><p class="text-xs mt-2">OPSEC Notes: Maintain minimum necessary touchpoints.<br>Detection Avoidance: Prefer passive collection and paced requests.<br>Logging awareness: Assume all actions are logged.</p>`;c.appendChild(d)});
+}
+function makeBlock(title,code){return `<article class="command-block border border-emerald-400/30 rounded p-3 bg-black/40"><div class="flex justify-between items-center"><h3 class="text-emerald-300">${title}</h3><button class="copy-btn text-xs px-2 py-1 border border-emerald-400/50 rounded" data-copy="${encodeURIComponent(code)}">Copy</button></div><pre><code class="language-bash">${code}</code></pre><p class="copy-status text-xs text-cyan-300"></p></article>`;}
+function setupLibraries(){
+  document.getElementById('nmapLib').innerHTML=Object.entries(nmapBlocks).map(([t,c])=>makeBlock(t,c)).join('');
+  document.getElementById('enumLib').innerHTML=Object.entries(enumBlocks).map(([t,c])=>makeBlock(t,c)).join('');
+  Prism.highlightAll();
+}
+function setupCopyButtons(){
+  document.addEventListener('click',async(e)=>{const b=e.target.closest('.copy-btn');if(!b)return;const txt=decodeURIComponent(b.dataset.copy);await navigator.clipboard.writeText(txt);const msg=b.closest('article').querySelector('.copy-status');msg.textContent='Copied!';setTimeout(()=>msg.textContent='',1200);});
+}
+function setupSearch(){
+  const s=document.getElementById('searchInput');
+  s.addEventListener('input',()=>{document.querySelectorAll('.highlight').forEach(x=>x.outerHTML=x.textContent); const q=s.value.trim(); if(!q) return; document.querySelectorAll('.searchable').forEach(sec=>{const walker=document.createTreeWalker(sec,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(n=>{if(n.parentElement.closest('script,style'))return; const i=n.textContent.toLowerCase().indexOf(q.toLowerCase());if(i>-1){const span=document.createElement('span');span.innerHTML=n.textContent.replace(new RegExp(q,'ig'),m=>`<mark class="highlight">${m}</mark>`);n.parentNode.replaceChild(span,n);}});});});
+}
+function setupTheme(){
+  document.getElementById('themeSelect').onchange=(e)=>{const v=e.target.value;const map={green:['#00ff9f','#00d4ff','#a855f7'],purple:['#d946ef','#a855f7','#22d3ee'],blue:['#38bdf8','#22d3ee','#818cf8']};document.documentElement.style.setProperty('--neon',map[v][0]);document.documentElement.style.setProperty('--accent',map[v][1]);document.documentElement.style.setProperty('--accent2',map[v][2]);};
+}
+function setupChecklist(){
+  const box=document.getElementById('checklistItems'); const key='rt-checklist-v2'; const saved=JSON.parse(localStorage.getItem(key)||'[]');
+  box.innerHTML=checklistBase.map((t,i)=>`<label class="border border-slate-700 rounded p-2"><input data-i="${i}" type="checkbox" class="mr-2" ${saved.includes(i)?'checked':''}>${t}</label>`).join('');
+  const refresh=()=>{const checks=[...box.querySelectorAll('input:checked')].map(x=>Number(x.dataset.i));localStorage.setItem(key,JSON.stringify(checks));const pct=Math.round((checks.length/checklistBase.length)*100);document.getElementById('checkProgress').style.width=`${pct}%`;document.getElementById('checkProgressText').textContent=`Progress: ${pct}%`;};
+  box.onchange=refresh; refresh(); document.getElementById('resetChecklist').onclick=()=>{localStorage.removeItem(key);setupChecklist();};
+}
+function setupCommandBuilder(){
+  const ids=['cmdTarget','cmdScan','cmdPorts','cmdScript']; ids.forEach(id=>document.getElementById(id).addEventListener('input',build));
+  function build(){const t=document.getElementById('cmdTarget').value||'target.com';const s=document.getElementById('cmdScan').value;const p=document.getElementById('cmdPorts').value;const sc=document.getElementById('cmdScript').value;document.getElementById('builtCmd').textContent=`nmap ${s} ${p?`-p ${p} `:''}${sc?`${sc} `:''}${t}`.replace(/\s+/g,' ').trim();}
+  build();
+}
+function setupTerminal(){
+  const modal=document.getElementById('terminalModal');document.getElementById('terminalBtn').onclick=()=>{modal.classList.remove('hidden');modal.classList.add('flex');};document.getElementById('closeTerminal').onclick=()=>{modal.classList.add('hidden');modal.classList.remove('flex');};
+  document.getElementById('termInput').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const cmd=e.target.value.trim();const out=document.getElementById('termOutput');const map={help:'Sections: analysis, lifecycle, nmap, enum, builder, checklist',scan:'Use Start Analysis for passive intelligence.'};out.textContent += `\n$ ${cmd}\n${map[cmd]||'Command not found.'}`;e.target.value='';out.scrollTop=out.scrollHeight;});
+}
+function setupMenu(){document.getElementById('menuBtn').onclick=()=>document.getElementById('sidebar').classList.toggle('hidden');}
+function setupScroll(){window.addEventListener('scroll',()=>{const h=document.documentElement;const sc=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;document.getElementById('scrollProgress').style.width=`${sc}%`;});}
+function setupMatrix(){
+  const c=document.getElementById('matrix'),ctx=c.getContext('2d');const resize=()=>{c.width=innerWidth;c.height=innerHeight};resize();addEventListener('resize',resize);const chars='01アカサタナハマヤャラワ';const fs=14;let cols=Math.floor(innerWidth/fs);let drops=Array(cols).fill(1);
+  setInterval(()=>{ctx.fillStyle='rgba(11,15,25,0.08)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--neon');ctx.font=fs+'px monospace';for(let i=0;i<drops.length;i++){const txt=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(txt,i*fs,drops[i]*fs);if(drops[i]*fs>c.height&&Math.random()>.975)drops[i]=0;drops[i]++;}},55);
+}
+function renderChart(){
+  new Chart(document.getElementById('statsChart'),{type:'bar',data:{labels:['Open Services','Header Gaps','Checklist Complete'],datasets:[{label:'Dashboard Stats',data:[5,2,0],backgroundColor:['#00ff9f','#f43f5e','#22d3ee']}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9ca3af'}},y:{ticks:{color:'#9ca3af'}}}}});
+}
+initApp();
+</script>
+</body>
+</html>
