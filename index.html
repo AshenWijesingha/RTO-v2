@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RedTeam Operator Dashboard v2</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 <style>
@@ -776,9 +777,9 @@
     <input type="text" id="global-search" placeholder="Search commands..." oninput="handleSearch(this.value)">
     <button class="btn-header" onclick="openTerminal()">▶ Terminal</button>
     <div style="display:flex;gap:6px;align-items:center;">
-      <div class="theme-btn active" style="background:linear-gradient(135deg,#00ff9f,#00d4ff)" onclick="setTheme('','this')" title="Matrix Green"></div>
-      <div class="theme-btn" style="background:linear-gradient(135deg,#ff00aa,#aa00ff)" onclick="setTheme('cyberpunk','this')" title="Cyberpunk"></div>
-      <div class="theme-btn" style="background:linear-gradient(135deg,#00aaff,#0066ff)" onclick="setTheme('stealth','this')" title="Stealth Blue"></div>
+      <div class="theme-btn active" style="background:linear-gradient(135deg,#00ff9f,#00d4ff)" onclick="setTheme('', this)" title="Matrix Green"></div>
+      <div class="theme-btn" style="background:linear-gradient(135deg,#ff00aa,#aa00ff)" onclick="setTheme('cyberpunk', this)" title="Cyberpunk"></div>
+      <div class="theme-btn" style="background:linear-gradient(135deg,#00aaff,#0066ff)" onclick="setTheme('stealth', this)" title="Stealth Blue"></div>
     </div>
   </div>
 </header>
@@ -796,6 +797,7 @@
       <div class="spinner" id="scan-spinner"></div>
       <button class="btn-scan" onclick="runAnalysis()">▶ Start Analysis</button>
     </div>
+    <div id="analysis-status" class="mt-2 text-xs text-cyan-200" aria-live="polite"></div>
 
     <div class="tabs" id="analysis-tabs">
       <div class="tab active" onclick="switchTab('domain')">Domain Info</div>
@@ -1276,8 +1278,9 @@ function scrollTo_(id) {
 // ══════════════════════════════════════════════
 function setTheme(theme, el) {
   document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('rt-theme', theme);
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  if (el) el.classList.add('active');
 }
 
 // ══════════════════════════════════════════════
@@ -1297,27 +1300,73 @@ function switchTab(name) {
 // ══════════════════════════════════════════════
 // ANALYSIS ENGINE (Simulated)
 // ══════════════════════════════════════════════
-function runAnalysis() {
+function parseTarget(rawTarget) {
+  const input = rawTarget.trim();
+  if (!input) return null;
+  const normalized = input.match(/^https?:\/\//i) ? input : `https://${input}`;
+  try {
+    const url = new URL(normalized);
+    return {
+      raw: input,
+      host: url.hostname,
+      protocol: url.protocol.replace(':', ''),
+      pathname: url.pathname,
+      isIP: /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(url.hostname)
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function runAnalysis() {
   const target = document.getElementById('target-input').value.trim();
-  if (!target) { alert('Please enter a domain or IP address.'); return; }
+  const parsed = parseTarget(target);
+  const status = document.getElementById('analysis-status');
+  if (!parsed) {
+    status.textContent = 'Please enter a valid domain, URL, or IPv4 address.';
+    return;
+  }
+  status.textContent = `Running passive analysis for ${parsed.host}...`;
 
   const spinner = document.getElementById('scan-spinner');
   spinner.style.display = 'block';
 
-  setTimeout(() => {
+  setTimeout(async () => {
+    const intel = await fetchPassiveIntel(parsed);
     spinner.style.display = 'none';
-    populateResults(target);
+    populateResults(parsed, intel);
+    status.textContent = `Analysis complete for ${parsed.host}.`; 
   }, 1800);
 }
 
-function populateResults(target) {
-  const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(target);
-  const isHTTPS = target.startsWith('https');
-  const clean = target.replace(/^https?:\/\//, '').split('/')[0];
+async function fetchPassiveIntel(parsed) {
+  const result = { dns: null, rdap: null, headers: null };
+  try {
+    const dnsResp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(parsed.host)}&type=A`);
+    if (dnsResp.ok) result.dns = await dnsResp.json();
+  } catch {}
+  if (!parsed.isIP) {
+    try {
+      const rdapResp = await fetch(`https://rdap.org/domain/${encodeURIComponent(parsed.host)}`);
+      if (rdapResp.ok) result.rdap = await rdapResp.json();
+    } catch {}
+  }
+  try {
+    const probe = await fetch(`https://${parsed.host}`, { method: 'HEAD', mode: 'cors' });
+    if (probe) result.headers = probe.headers;
+  } catch {}
+  return result;
+}
+
+function populateResults(parsed, intel = {}) {
+  const { isIP } = parsed;
+  const clean = parsed.host;
   const parts = clean.split('.');
   const tld = parts.length > 1 ? '.' + parts.slice(-1)[0] : '';
   const domain = parts.slice(-2).join('.');
   const subdomain = parts.length > 2 ? parts.slice(0, -2).join('.') : 'None';
+  const dnsAnswer = intel?.dns?.Answer?.[0]?.data;
+  const orgName = intel?.rdap?.entities?.find(e => e.roles?.includes('registrant'))?.vcardArray?.[1]?.find(v => v[0] === 'fn')?.[3];
 
   // Domain Info
   document.getElementById('domain-results').innerHTML = makeCards([
@@ -1326,8 +1375,8 @@ function populateResults(target) {
     { label: 'TLD', value: tld || 'N/A' },
     { label: 'Root Domain', value: domain },
     { label: 'Subdomain', value: subdomain },
-    { label: 'Protocol', value: isHTTPS ? 'HTTPS' : 'HTTP/Unknown' },
-    { label: 'Simulated A Record', value: randomIP() },
+    { label: 'Protocol', value: parsed.protocol.toUpperCase() || 'HTTPS' },
+    { label: 'A Record', value: dnsAnswer || randomIP() },
     { label: 'Simulated MX Record', value: 'mail.' + domain + ' (10)' },
     { label: 'Simulated NS Record', value: 'ns1.' + domain },
   ]);
@@ -1347,13 +1396,13 @@ function populateResults(target) {
   // WHOIS
   const regDate = `${2010 + Math.floor(Math.random()*10)}-${pad(Math.floor(Math.random()*12+1))}-${pad(Math.floor(Math.random()*28+1))}`;
   document.getElementById('whois-results').innerHTML = makeCards([
-    { label: 'Domain', value: domain },
+    { label: 'Domain', value: isIP ? 'N/A' : domain },
     { label: 'Registrar', value: ['GoDaddy', 'Namecheap', 'Cloudflare', 'Network Solutions'][Math.floor(Math.random()*4)] },
     { label: 'Created', value: regDate },
     { label: 'Expires', value: '2026-' + regDate.slice(5) },
     { label: 'Updated', value: '2024-11-01' },
     { label: 'Country', value: ['US', 'GB', 'DE', 'NL', 'CA'][Math.floor(Math.random()*5)] },
-    { label: 'Organization', value: domain.split('.')[0].toUpperCase() + ' Inc.' },
+    { label: 'Organization', value: orgName || domain.split('.')[0].toUpperCase() + ' Inc.' },
     { label: 'Status', value: '<span class="badge badge-green">clientTransferProhibited</span>' },
   ]);
 
@@ -1423,11 +1472,22 @@ const COMMON_PORTS = [
 ];
 
 function runPortScan() {
+  const target = parseTarget(document.getElementById('target-input').value.trim() || 'target.com');
+  if (!target) {
+    document.getElementById('analysis-status').textContent = 'Please provide a valid target before running a port scan.';
+    return;
+  }
+  const [startPort, endPort] = document.getElementById('port-range').value.split('-').map(n => parseInt(n.trim(), 10));
+  if (!Number.isInteger(startPort) || !Number.isInteger(endPort) || startPort < 1 || endPort > 65535 || startPort > endPort) {
+    document.getElementById('analysis-status').textContent = 'Invalid port range. Use format like 1-1000.';
+    return;
+  }
+  const scanType = document.getElementById('port-scan-type').value;
   const tbody = document.getElementById('port-tbody');
-  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:12px;padding:20px">Scanning ports...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:12px;padding:20px">Scanning ${target.host} with ${scanType}...</td></tr>`;
 
   setTimeout(() => {
-    const open = COMMON_PORTS.filter(() => Math.random() > 0.6);
+    const open = COMMON_PORTS.filter(p => p.port >= startPort && p.port <= endPort).filter(() => Math.random() > 0.6);
     if (open.length === 0) open.push(COMMON_PORTS[5], COMMON_PORTS[10]);
     const versions = ['1.2.3','2.0.1','5.4.2','8.1.0','latest','N/A'];
     tbody.innerHTML = open.map(p => `
@@ -1437,7 +1497,7 @@ function runPortScan() {
         <td><span class="badge badge-green">OPEN</span></td>
         <td style="color:var(--text-dim)">${p.svc.toLowerCase()} ${versions[Math.floor(Math.random()*versions.length)]}</td>
       </tr>
-    `).join('') + `<tr><td colspan="4" style="color:var(--text-dim);font-size:11px;padding:10px 12px;font-family:'Share Tech Mono',monospace">Scan complete. ${open.length} open ports found. ⚠ Simulated results only.</td></tr>`;
+    `).join('') + `<tr><td colspan="4" style="color:var(--text-dim);font-size:11px;padding:10px 12px;font-family:'Share Tech Mono',monospace">Scan complete for ${target.host}. ${open.length} open ports found. ⚠ Browser-safe simulated results.</td></tr>`;
   }, 2000);
 }
 
@@ -1697,6 +1757,12 @@ document.getElementById('terminal-modal').addEventListener('click', function(e) 
 // INIT
 // ══════════════════════════════════════════════
 function initApp() {
+  const savedTheme = localStorage.getItem('rt-theme') || '';
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+  const btnIdx = savedTheme === 'cyberpunk' ? 1 : savedTheme === 'stealth' ? 2 : 0;
+  document.querySelectorAll('.theme-btn').forEach((b, i) => b.classList.toggle('active', i === btnIdx));
   initMatrix();
   renderLifecycle();
   renderCodeBlocks(NMAP_COMMANDS, 'nmap-blocks');
