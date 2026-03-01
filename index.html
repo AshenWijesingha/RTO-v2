@@ -2668,9 +2668,9 @@ function exportReport() {
   ];
   apiSections.forEach(section => {
     const el = document.getElementById(section.id);
-    if (el) {
+    if (el && el.dataset.hasResults === 'true') {
       const text = el.innerText.trim();
-      if (text && !text.includes('Enter') && !text.includes('configure') && !text.includes('Please')) {
+      if (text) {
         lines.push('--- ' + section.label + ' ---');
         lines.push(text);
         lines.push('');
@@ -2966,6 +2966,40 @@ document.getElementById('terminal-modal').addEventListener('click', function(e) 
 // ══════════════════════════════════════════════
 // API KEY MANAGEMENT
 // ══════════════════════════════════════════════
+function isValidIPv4(ip) {
+  const parts = ip.split('.');
+  return parts.length === 4 && parts.every(p => { const n = Number(p); return /^\d{1,3}$/.test(p) && n >= 0 && n <= 255; });
+}
+
+async function resolveToIP(query) {
+  if (isValidIPv4(query)) return query;
+  const dnsResp = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(query) + '&type=A');
+  if (dnsResp.ok) {
+    const dnsData = await dnsResp.json();
+    if (dnsData.Answer && dnsData.Answer.length > 0) return dnsData.Answer[0].data;
+  }
+  throw new Error('Could not resolve domain to IP');
+}
+
+function showApiLoading(container, msg) {
+  container.dataset.hasResults = 'false';
+  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">' + escapeHtml(msg) + '</div>';
+}
+
+function showApiError(container, msg) {
+  container.dataset.hasResults = 'false';
+  container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">' + escapeHtml(msg) + '</div>';
+}
+
+function showApiWarning(container, msg) {
+  container.dataset.hasResults = 'false';
+  container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">' + escapeHtml(msg) + '</div>';
+}
+
+function setApiResults(container, html) {
+  container.dataset.hasResults = 'true';
+  container.innerHTML = html;
+}
 function getApiKey(service) {
   return localStorage.getItem('rt-apikey-' + service) || '';
 }
@@ -3040,25 +3074,17 @@ async function runShodanQuery() {
   const statusEl = document.getElementById('shodan-api-status');
 
   if (!query) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter an IP address or search query.</div>';
+    showApiWarning(container, 'Please enter an IP address or search query.');
     return;
   }
 
   const apiKey = getApiKey('shodan');
-  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying Shodan...</div>';
+  showApiLoading(container, 'Querying Shodan...');
 
   if (!apiKey) {
     statusEl.innerHTML = '<span style="color:var(--yellow)">No API key configured. Using free InternetDB fallback (limited data).</span>';
     try {
-      let ip = query;
-      if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(query)) {
-        const dnsResp = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(query) + '&type=A');
-        if (dnsResp.ok) {
-          const dnsData = await dnsResp.json();
-          if (dnsData.Answer && dnsData.Answer.length > 0) ip = dnsData.Answer[0].data;
-          else throw new Error('Could not resolve domain to IP');
-        }
-      }
+      const ip = await resolveToIP(query);
       const resp = await fetch('https://internetdb.shodan.io/' + encodeURIComponent(ip));
       if (!resp.ok) throw new Error('No data found in InternetDB for this IP');
       const data = await resp.json();
@@ -3071,9 +3097,9 @@ async function runShodanQuery() {
       html += '<div class="api-result-row"><span class="api-result-key">Tags</span><span class="api-result-val">' + (data.tags || []).map(t => '<span class="api-tag warn">' + escapeHtml(t) + '</span>').join(' ') + '</span></div>';
       html += '</div>';
       html += '<div style="padding:8px;font-size:10px;color:var(--text-dim);font-family:\'Share Tech Mono\',monospace;margin-top:6px">Source: Shodan InternetDB (free, no API key required). Add your API key for detailed results.</div>';
-      container.innerHTML = html;
+      setApiResults(container, html);
     } catch (err) {
-      container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+      showApiError(container, 'Error: ' + String(err.message));
     }
     return;
   }
@@ -3083,15 +3109,7 @@ async function runShodanQuery() {
   try {
     let url;
     if (mode === 'host') {
-      let ip = query;
-      if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(query)) {
-        const dnsResp = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(query) + '&type=A');
-        if (dnsResp.ok) {
-          const dnsData = await dnsResp.json();
-          if (dnsData.Answer && dnsData.Answer.length > 0) ip = dnsData.Answer[0].data;
-          else throw new Error('Could not resolve domain to IP');
-        }
-      }
+      const ip = await resolveToIP(query);
       url = 'https://api.shodan.io/shodan/host/' + encodeURIComponent(ip) + '?key=' + encodeURIComponent(apiKey);
     } else {
       url = 'https://api.shodan.io/shodan/host/search?key=' + encodeURIComponent(apiKey) + '&query=' + encodeURIComponent(query);
@@ -3127,7 +3145,7 @@ async function runShodanQuery() {
         });
       }
       html += '</div>';
-      container.innerHTML = html;
+      setApiResults(container, html);
     } else {
       const matches = data.matches || [];
       if (matches.length === 0) {
@@ -3144,10 +3162,10 @@ async function runShodanQuery() {
         html += '</div>';
       });
       html += '</div>';
-      container.innerHTML = html;
+      setApiResults(container, html);
     }
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Shodan API Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'Shodan API Error: ' + String(err.message));
   }
 }
 
@@ -3159,17 +3177,17 @@ async function runGreyNoiseQuery() {
   const container = document.getElementById('greynoise-results');
 
   if (!ip) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter an IP address.</div>';
+    showApiWarning(container, 'Please enter an IP address.');
     return;
   }
 
   const apiKey = getApiKey('greynoise');
   if (!apiKey) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please configure your GreyNoise API key in API Settings first.</div>';
+    showApiWarning(container, 'Please configure your GreyNoise API key in API Settings first.');
     return;
   }
 
-  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying GreyNoise...</div>';
+  showApiLoading(container, 'Querying GreyNoise...');
 
   try {
     const resp = await fetch('https://api.greynoise.io/v3/community/' + encodeURIComponent(ip), {
@@ -3201,9 +3219,9 @@ async function runGreyNoiseQuery() {
       html += '<div class="api-result-row"><span class="api-result-key">Details</span><span class="api-result-val"><a href="' + escapeHtml(data.link) + '" target="_blank" rel="noopener" style="color:var(--neon2);text-decoration:underline">View on GreyNoise</a></span></div>';
     }
     html += '</div>';
-    container.innerHTML = html;
+    setApiResults(container, html);
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">GreyNoise Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'GreyNoise Error: ' + String(err.message));
   }
 }
 
@@ -3215,21 +3233,20 @@ async function runVulDBQuery() {
   const container = document.getElementById('vuldb-results');
 
   if (!query) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a CVE ID or search keyword.</div>';
+    showApiWarning(container, 'Please enter a CVE ID or search keyword.');
     return;
   }
 
   const apiKey = getApiKey('vuldb');
   if (!apiKey) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please configure your VulDB API key in API Settings first.</div>';
+    showApiWarning(container, 'Please configure your VulDB API key in API Settings first.');
     return;
   }
 
-  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying VulDB...</div>';
+  showApiLoading(container, 'Querying VulDB...');
 
   try {
-    const isCVE = /^CVE-\d{4}-\d+$/i.test(query);
-    const body = isCVE ? 'search=' + encodeURIComponent(query) + '&details=1' : 'search=' + encodeURIComponent(query) + '&details=1';
+    const body = 'search=' + encodeURIComponent(query) + '&details=1';
     const resp = await fetch('https://vuldb.com/?api', {
       method: 'POST',
       headers: {
@@ -3272,9 +3289,9 @@ async function runVulDBQuery() {
     });
 
     html += '</div>';
-    container.innerHTML = html;
+    setApiResults(container, html);
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">VulDB Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'VulDB Error: ' + String(err.message));
   }
 }
 
@@ -3287,17 +3304,17 @@ async function runFullHuntQuery() {
   const container = document.getElementById('fullhunt-results');
 
   if (!domain) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a domain name.</div>';
+    showApiWarning(container, 'Please enter a domain name.');
     return;
   }
 
   const apiKey = getApiKey('fullhunt');
   if (!apiKey) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please configure your FullHunt API key in API Settings first.</div>';
+    showApiWarning(container, 'Please configure your FullHunt API key in API Settings first.');
     return;
   }
 
-  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying FullHunt...</div>';
+  showApiLoading(container, 'Querying FullHunt...');
 
   try {
     let url;
@@ -3330,7 +3347,7 @@ async function runFullHuntQuery() {
         html += '<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--neon2)">' + escapeHtml(String(host)) + '</div>';
       });
       html += '</div>';
-      container.innerHTML = html;
+      setApiResults(container, html);
     } else {
       let html = '<div class="api-result-container">';
       html += '<div class="api-result-row"><span class="api-result-key">Domain</span><span class="api-result-val">' + escapeHtml(String(data.domain || domain)) + '</span></div>';
@@ -3343,7 +3360,7 @@ async function runFullHuntQuery() {
       if (data.hosts && Array.isArray(data.hosts) && data.hosts.length > 0) {
         html += '<div style="margin-top:12px;font-size:11px;color:var(--neon2);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Discovered Hosts</div>';
         data.hosts.slice(0, 25).forEach(host => {
-          if (typeof host === 'object') {
+          if (typeof host === 'object' && host !== null) {
             html += '<div style="padding:8px;border-bottom:1px solid var(--border);font-size:11px">';
             html += '<div style="color:var(--neon)">' + escapeHtml(String(host.host || host.domain || '')) + '</div>';
             if (host.ip_address) html += '<div style="color:var(--text-dim)">IP: ' + escapeHtml(String(host.ip_address)) + '</div>';
@@ -3358,10 +3375,10 @@ async function runFullHuntQuery() {
       }
 
       html += '</div>';
-      container.innerHTML = html;
+      setApiResults(container, html);
     }
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">FullHunt Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'FullHunt Error: ' + String(err.message));
   }
 }
 
@@ -3406,7 +3423,7 @@ async function checkZapStatus() {
     html += '<div class="api-result-row"><span class="api-result-key">Version</span><span class="api-result-val">' + escapeHtml(String(data.version || 'Unknown')) + '</span></div>';
     html += '<div class="api-result-row"><span class="api-result-key">ZAP URL</span><span class="api-result-val">' + escapeHtml(getZapUrl()) + '</span></div>';
     html += '</div>';
-    container.innerHTML = html;
+    setApiResults(container, html);
   } catch (err) {
     container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag danger">Connection Failed</span></span></div><div class="api-result-row"><span class="api-result-key">Error</span><span class="api-result-val">' + escapeHtml(String(err.message)) + '</span></div><div class="api-result-row"><span class="api-result-key">Tip</span><span class="api-result-val">Ensure ZAP is running and the API is enabled. Check your ZAP URL and API key in API Settings.</span></div></div>';
   }
@@ -3416,23 +3433,23 @@ async function startZapSpider() {
   const url = document.getElementById('zap-spider-url').value.trim();
   const container = document.getElementById('zap-spider-results');
   if (!url) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a target URL.</div>';
+    showApiWarning(container, 'Please enter a target URL.');
     return;
   }
-  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Starting spider...</div>';
+  showApiLoading(container, 'Starting spider...');
   try {
     const data = await zapFetch('/JSON/spider/action/scan/?url=' + encodeURIComponent(url));
     zapSpiderScanId = data.scan;
     container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Spider Started</span><span class="api-result-val"><span class="api-tag success">Scan ID: ' + escapeHtml(String(zapSpiderScanId)) + '</span></span></div><div class="api-result-row"><span class="api-result-key">Target</span><span class="api-result-val">' + escapeHtml(url) + '</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Click "Check Progress" to monitor the spider status.</div>';
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'Error: ' + String(err.message));
   }
 }
 
 async function getZapSpiderStatus() {
   const container = document.getElementById('zap-spider-results');
   if (!zapSpiderScanId) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No spider scan running. Start a spider first.</div>';
+    showApiWarning(container, 'No spider scan running. Start a spider first.');
     return;
   }
   try {
@@ -3451,9 +3468,9 @@ async function getZapSpiderStatus() {
       if (urls.length > 50) html += '<div style="padding:6px 0;font-size:11px;color:var(--text-dim)">... and ' + (urls.length - 50) + ' more URLs</div>';
     }
     html += '</div>';
-    container.innerHTML = html;
+    setApiResults(container, html);
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'Error: ' + String(err.message));
   }
 }
 
@@ -3461,23 +3478,23 @@ async function startZapActiveScan() {
   const url = document.getElementById('zap-scan-url').value.trim();
   const container = document.getElementById('zap-scan-results');
   if (!url) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a target URL.</div>';
+    showApiWarning(container, 'Please enter a target URL.');
     return;
   }
-  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Starting active scan...</div>';
+  showApiLoading(container, 'Starting active scan...');
   try {
     const data = await zapFetch('/JSON/ascan/action/scan/?url=' + encodeURIComponent(url));
     zapActiveScanId = data.scan;
     container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Active Scan Started</span><span class="api-result-val"><span class="api-tag success">Scan ID: ' + escapeHtml(String(zapActiveScanId)) + '</span></span></div><div class="api-result-row"><span class="api-result-key">Target</span><span class="api-result-val">' + escapeHtml(url) + '</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Click "Check Progress" to monitor the scan.</div>';
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'Error: ' + String(err.message));
   }
 }
 
 async function getZapScanStatus() {
   const container = document.getElementById('zap-scan-results');
   if (!zapActiveScanId) {
-    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No active scan running. Start a scan first.</div>';
+    showApiWarning(container, 'No active scan running. Start a scan first.');
     return;
   }
   try {
@@ -3489,16 +3506,16 @@ async function getZapScanStatus() {
     if (progress === '100') {
       html += '<div style="font-size:11px;color:var(--neon);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Scan complete! Switch to the Alerts tab to view findings.</div>';
     }
-    container.innerHTML = html;
+    setApiResults(container, html);
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'Error: ' + String(err.message));
   }
 }
 
 async function getZapAlerts() {
   const baseUrl = document.getElementById('zap-alerts-url').value.trim();
   const container = document.getElementById('zap-alerts-results');
-  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Fetching alerts...</div>';
+  showApiLoading(container, 'Fetching alerts...');
   try {
     const path = baseUrl ? '/JSON/core/view/alerts/?baseurl=' + encodeURIComponent(baseUrl) : '/JSON/core/view/alerts/';
     const data = await zapFetch(path);
@@ -3524,13 +3541,11 @@ async function getZapAlerts() {
     });
     if (alerts.length > 50) html += '<div style="padding:10px;font-size:11px;color:var(--text-dim)">... and ' + (alerts.length - 50) + ' more alerts</div>';
     html += '</div>';
-    container.innerHTML = html;
+    setApiResults(container, html);
   } catch (err) {
-    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+    showApiError(container, 'Error: ' + String(err.message));
   }
 }
-
-// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function initApp() {
