@@ -1,0 +1,10 @@
+{
+  "shodan": "",
+  "vuldb": "",
+  "greynoise": "",
+  "fullhunt": "",
+  "zap": {
+    "url": "http://localhost:8080",
+    "apiKey": ""
+  }
+}

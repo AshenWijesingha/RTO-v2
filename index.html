@@ -816,6 +816,210 @@
     border-bottom: 1px solid rgba(255,255,255,0.04);
   }
   .subdomain-table tr:hover td { background: rgba(0,255,159,0.03); }
+
+  /* API Services */
+  .api-service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .api-service-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    transition: all 0.2s;
+  }
+
+  .api-service-card:hover {
+    border-color: var(--neon);
+    box-shadow: var(--glow);
+  }
+
+  .api-service-card .service-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .api-service-card .service-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,255,159,0.08);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .api-service-card .service-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--neon);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .api-service-card .service-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .api-key-input {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+  }
+
+  .api-key-input:focus {
+    outline: none;
+    border-color: var(--neon);
+    box-shadow: var(--glow);
+  }
+
+  .api-key-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+  .api-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  .api-status.configured {
+    color: var(--neon);
+    background: rgba(0,255,159,0.1);
+    border: 1px solid rgba(0,255,159,0.3);
+  }
+
+  .api-status.not-configured {
+    color: var(--yellow);
+    background: rgba(255,204,0,0.1);
+    border: 1px solid rgba(255,204,0,0.3);
+  }
+
+  .api-result-container {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .api-result-container::-webkit-scrollbar { width: 4px; }
+  .api-result-container::-webkit-scrollbar-track { background: transparent; }
+  .api-result-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .api-result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .api-result-row:last-child { border-bottom: none; }
+
+  .api-result-key {
+    color: var(--neon2);
+    font-weight: 600;
+    min-width: 140px;
+  }
+
+  .api-result-val {
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+    flex: 1;
+    margin-left: 12px;
+  }
+
+  .api-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    background: rgba(0,212,255,0.12);
+    color: var(--neon2);
+    border: 1px solid rgba(0,212,255,0.25);
+  }
+
+  .api-tag.danger {
+    background: rgba(255,0,60,0.12);
+    color: var(--red);
+    border-color: rgba(255,0,60,0.3);
+  }
+
+  .api-tag.warn {
+    background: rgba(255,204,0,0.12);
+    color: var(--yellow);
+    border-color: rgba(255,204,0,0.3);
+  }
+
+  .api-tag.success {
+    background: rgba(0,255,159,0.12);
+    color: var(--neon);
+    border-color: rgba(0,255,159,0.3);
+  }
+
+  .api-section-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .api-section-tab {
+    padding: 10px 18px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .api-section-tab:hover { color: var(--neon); }
+
+  .api-section-tab.active {
+    color: var(--neon);
+    border-bottom-color: var(--neon);
+  }
+
+  .api-tab-content {
+    display: none;
+  }
+
+  .api-tab-content.active {
+    display: block;
+  }
 </style>
 </head>
 <body>
@@ -852,6 +1056,15 @@
     <div class="nav-label">Recon Tools</div>
     <div class="nav-item" onclick="scrollTo_('#subdomain-section')"><span class="icon">⊕</span> Subdomains</div>
     <div class="nav-item" onclick="scrollTo_('#revshell-section')"><span class="icon">⌘</span> Rev Shell Gen</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">API Services</div>
+    <div class="nav-item" onclick="scrollTo_('#api-settings-section')"><span class="icon">⚷</span> API Settings</div>
+    <div class="nav-item" onclick="scrollTo_('#shodan-section')"><span class="icon">⌬</span> Shodan</div>
+    <div class="nav-item" onclick="scrollTo_('#greynoise-section')"><span class="icon">◐</span> GreyNoise</div>
+    <div class="nav-item" onclick="scrollTo_('#vuldb-section')"><span class="icon">⚠</span> VulDB</div>
+    <div class="nav-item" onclick="scrollTo_('#fullhunt-section')"><span class="icon">◈</span> FullHunt</div>
+    <div class="nav-item" onclick="scrollTo_('#zap-section')"><span class="icon">⚡</span> ZAP Scanner</div>
   </div>
   <div class="nav-section">
     <div class="nav-label">Utilities</div>
@@ -1193,6 +1406,215 @@
       <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="saveNotes()">💾 Save Notes</button>
       <button class="btn-copy" onclick="exportNotes()">⬇ Export Notes</button>
       <button class="btn-copy" onclick="clearNotes()">✕ Clear Notes</button>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY SETTINGS -->
+<div class="section" id="api-settings-section">
+  <div class="section-title">⚷ API Key Configuration</div>
+  <div class="panel" style="padding:24px">
+    <div style="font-size:12px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-bottom:16px;line-height:1.6">
+      Configure your API keys below. Keys are stored securely in your browser's localStorage and never transmitted to third parties.
+      You can also provide keys via the <code style="color:var(--neon);background:rgba(0,255,159,0.08);padding:2px 6px;border-radius:3px">api-keys.json</code> file.
+    </div>
+    <div class="api-service-grid">
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">⌬</div>
+          <div>
+            <div class="service-name">Shodan</div>
+            <div style="font-size:10px;color:var(--text-dim)">developer.shodan.io</div>
+          </div>
+        </div>
+        <div class="service-desc">Internet-connected device search engine. Provides host info, open ports, vulnerabilities, and banners.</div>
+        <input type="password" class="api-key-input" id="api-key-shodan" placeholder="Enter Shodan API key..." oninput="saveApiKey('shodan', this.value)">
+        <div id="api-status-shodan" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">◐</div>
+          <div>
+            <div class="service-name">GreyNoise</div>
+            <div style="font-size:10px;color:var(--text-dim)">viz.greynoise.io</div>
+          </div>
+        </div>
+        <div class="service-desc">Identifies internet scanners and noise. Tells you if an IP is mass-scanning the internet or is targeted.</div>
+        <input type="password" class="api-key-input" id="api-key-greynoise" placeholder="Enter GreyNoise API key..." oninput="saveApiKey('greynoise', this.value)">
+        <div id="api-status-greynoise" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">⚠</div>
+          <div>
+            <div class="service-name">VulDB</div>
+            <div style="font-size:10px;color:var(--text-dim)">vuldb.com</div>
+          </div>
+        </div>
+        <div class="service-desc">Vulnerability intelligence database. Search CVEs, exploits, and threat intelligence data.</div>
+        <input type="password" class="api-key-input" id="api-key-vuldb" placeholder="Enter VulDB API key..." oninput="saveApiKey('vuldb', this.value)">
+        <div id="api-status-vuldb" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">◈</div>
+          <div>
+            <div class="service-name">FullHunt</div>
+            <div style="font-size:10px;color:var(--text-dim)">fullhunt.io</div>
+          </div>
+        </div>
+        <div class="service-desc">Attack surface management platform. Discover exposed assets, subdomains, and services for a domain.</div>
+        <input type="password" class="api-key-input" id="api-key-fullhunt" placeholder="Enter FullHunt API key..." oninput="saveApiKey('fullhunt', this.value)">
+        <div id="api-status-fullhunt" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">⚡</div>
+          <div>
+            <div class="service-name">OWASP ZAP</div>
+            <div style="font-size:10px;color:var(--text-dim)">zaproxy.org</div>
+          </div>
+        </div>
+        <div class="service-desc">Connect to a local ZAP proxy for active scanning. Requires ZAP running on your machine with API enabled.</div>
+        <input type="text" class="api-key-input" id="api-key-zap-url" placeholder="ZAP URL (default: http://localhost:8080)" oninput="saveApiKey('zap_url', this.value)" style="margin-bottom:6px">
+        <input type="password" class="api-key-input" id="api-key-zap" placeholder="Enter ZAP API key..." oninput="saveApiKey('zap', this.value)">
+        <div id="api-status-zap" class="api-status not-configured">● Not configured</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="loadApiKeysFromFile()">⬆ Load from api-keys.json</button>
+      <button class="btn-copy" onclick="clearAllApiKeys()">✕ Clear All Keys</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHODAN API -->
+<div class="section" id="shodan-section">
+  <div class="section-title">⌬ Shodan Intelligence</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="shodan-query" placeholder="Enter IP address or search query (e.g., apache country:US)" style="flex:1;min-width:200px">
+      <select class="builder-select" id="shodan-mode" style="width:160px">
+        <option value="host">Host Lookup</option>
+        <option value="search">Search Query</option>
+      </select>
+      <button class="btn-scan" onclick="runShodanQuery()">▶ Query Shodan</button>
+    </div>
+    <div id="shodan-api-status" style="font-size:11px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-bottom:8px"></div>
+    <div id="shodan-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Enter an IP or query above. Requires a Shodan API key configured in API Settings.<br>
+        Falls back to InternetDB (free, no key required) for basic host info.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GREYNOISE API -->
+<div class="section" id="greynoise-section">
+  <div class="section-title">◐ GreyNoise Intelligence</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="greynoise-ip" placeholder="Enter IP address to check (e.g., 8.8.8.8)" style="flex:1;min-width:200px">
+      <button class="btn-scan" onclick="runGreyNoiseQuery()">▶ Check IP</button>
+    </div>
+    <div id="greynoise-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Enter an IP address to check if it is a known scanner or benign service. Requires a GreyNoise API key.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VULDB API -->
+<div class="section" id="vuldb-section">
+  <div class="section-title">⚠ VulDB Vulnerability Intelligence</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="vuldb-query" placeholder="Search CVE or keyword (e.g., CVE-2021-44228 or Log4j)" style="flex:1;min-width:200px">
+      <button class="btn-scan" onclick="runVulDBQuery()">▶ Search VulDB</button>
+    </div>
+    <div id="vuldb-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Search for vulnerabilities by CVE ID or keyword. Requires a VulDB API key configured in API Settings.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FULLHUNT API -->
+<div class="section" id="fullhunt-section">
+  <div class="section-title">◈ FullHunt Attack Surface</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="fullhunt-domain" placeholder="Enter domain (e.g., example.com)" style="flex:1;min-width:200px">
+      <select class="builder-select" id="fullhunt-mode" style="width:180px">
+        <option value="domain">Domain Details</option>
+        <option value="subdomains">Subdomains</option>
+      </select>
+      <button class="btn-scan" onclick="runFullHuntQuery()">▶ Scan Domain</button>
+    </div>
+    <div id="fullhunt-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Enter a domain to discover its attack surface. Requires a FullHunt API key configured in API Settings.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ZAP SCANNER API -->
+<div class="section" id="zap-section">
+  <div class="section-title">⚡ OWASP ZAP Scanner</div>
+  <div class="panel" style="padding:24px">
+    <div style="font-size:11px;color:var(--yellow);font-family:'Share Tech Mono',monospace;margin-bottom:14px;padding:8px 12px;background:rgba(255,204,0,0.06);border:1px solid rgba(255,204,0,0.2);border-radius:4px">
+      ⚠ ZAP must be running locally with the API enabled. Ensure CORS is configured to allow requests from this dashboard.
+    </div>
+    <div class="api-section-tabs">
+      <div class="api-section-tab active" onclick="switchZapTab('status')">Status</div>
+      <div class="api-section-tab" onclick="switchZapTab('spider')">Spider</div>
+      <div class="api-section-tab" onclick="switchZapTab('scan')">Active Scan</div>
+      <div class="api-section-tab" onclick="switchZapTab('alerts')">Alerts</div>
+    </div>
+    <!-- ZAP Status -->
+    <div class="api-tab-content active" id="zap-tab-status">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <button class="btn-scan" onclick="checkZapStatus()">▶ Check ZAP Status</button>
+      </div>
+      <div id="zap-status-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Click "Check ZAP Status" to verify connectivity with your local ZAP instance.</div>
+      </div>
+    </div>
+    <!-- ZAP Spider -->
+    <div class="api-tab-content" id="zap-tab-spider">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" class="scan-input" id="zap-spider-url" placeholder="Target URL (e.g., http://target.com)" style="flex:1;min-width:200px">
+        <button class="btn-scan" onclick="startZapSpider()">▶ Start Spider</button>
+        <button class="btn-copy" onclick="getZapSpiderStatus()">⟳ Check Progress</button>
+      </div>
+      <div id="zap-spider-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a URL and start the spider to crawl the target application.</div>
+      </div>
+    </div>
+    <!-- ZAP Active Scan -->
+    <div class="api-tab-content" id="zap-tab-scan">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" class="scan-input" id="zap-scan-url" placeholder="Target URL (e.g., http://target.com)" style="flex:1;min-width:200px">
+        <button class="btn-scan" onclick="startZapActiveScan()">▶ Start Scan</button>
+        <button class="btn-copy" onclick="getZapScanStatus()">⟳ Check Progress</button>
+      </div>
+      <div id="zap-scan-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a URL to start an active vulnerability scan. Spider the target first for best results.</div>
+      </div>
+    </div>
+    <!-- ZAP Alerts -->
+    <div class="api-tab-content" id="zap-tab-alerts">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" class="scan-input" id="zap-alerts-url" placeholder="Base URL to filter alerts (optional)" style="flex:1;min-width:200px">
+        <button class="btn-scan" onclick="getZapAlerts()">▶ Get Alerts</button>
+      </div>
+      <div id="zap-alerts-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Retrieve vulnerability alerts discovered by ZAP scans.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -2236,6 +2658,26 @@ function exportReport() {
     lines.push('');
   }
 
+  // Include API service results in report
+  const apiSections = [
+    { id: 'shodan-results', label: 'SHODAN INTELLIGENCE' },
+    { id: 'greynoise-results', label: 'GREYNOISE INTELLIGENCE' },
+    { id: 'vuldb-results', label: 'VULDB VULNERABILITIES' },
+    { id: 'fullhunt-results', label: 'FULLHUNT ATTACK SURFACE' },
+    { id: 'zap-alerts-results', label: 'ZAP SECURITY ALERTS' },
+  ];
+  apiSections.forEach(section => {
+    const el = document.getElementById(section.id);
+    if (el) {
+      const text = el.innerText.trim();
+      if (text && !text.includes('Enter') && !text.includes('configure') && !text.includes('Please')) {
+        lines.push('--- ' + section.label + ' ---');
+        lines.push(text);
+        lines.push('');
+      }
+    }
+  });
+
   lines.push('='.repeat(60));
   lines.push('  END OF REPORT');
   lines.push('='.repeat(60));
@@ -2522,6 +2964,573 @@ document.getElementById('terminal-modal').addEventListener('click', function(e) 
 });
 
 // ══════════════════════════════════════════════
+// API KEY MANAGEMENT
+// ══════════════════════════════════════════════
+function getApiKey(service) {
+  return localStorage.getItem('rt-apikey-' + service) || '';
+}
+
+function saveApiKey(service, value) {
+  localStorage.setItem('rt-apikey-' + service, value.trim());
+  updateApiKeyStatus(service);
+}
+
+function updateApiKeyStatus(service) {
+  const key = getApiKey(service);
+  const el = document.getElementById('api-status-' + service);
+  if (!el) return;
+  if (key) {
+    el.className = 'api-status configured';
+    el.textContent = '● Configured';
+  } else {
+    el.className = 'api-status not-configured';
+    el.textContent = '● Not configured';
+  }
+}
+
+function loadApiKeyUI() {
+  const services = ['shodan', 'greynoise', 'vuldb', 'fullhunt', 'zap'];
+  services.forEach(s => {
+    const key = getApiKey(s);
+    const input = document.getElementById('api-key-' + s);
+    if (input && key) input.value = key;
+    updateApiKeyStatus(s);
+  });
+  const zapUrl = getApiKey('zap_url');
+  const zapUrlInput = document.getElementById('api-key-zap-url');
+  if (zapUrlInput && zapUrl) zapUrlInput.value = zapUrl;
+}
+
+async function loadApiKeysFromFile() {
+  try {
+    const resp = await fetch('api-keys.json');
+    if (!resp.ok) throw new Error('Could not load api-keys.json');
+    const keys = await resp.json();
+    if (keys.shodan) saveApiKey('shodan', keys.shodan);
+    if (keys.greynoise) saveApiKey('greynoise', keys.greynoise);
+    if (keys.vuldb) saveApiKey('vuldb', keys.vuldb);
+    if (keys.fullhunt) saveApiKey('fullhunt', keys.fullhunt);
+    if (keys.zap) {
+      if (keys.zap.apiKey) saveApiKey('zap', keys.zap.apiKey);
+      if (keys.zap.url) saveApiKey('zap_url', keys.zap.url);
+    }
+    loadApiKeyUI();
+    alert('API keys loaded from api-keys.json successfully.');
+  } catch (err) {
+    alert('Failed to load api-keys.json: ' + err.message);
+  }
+}
+
+function clearAllApiKeys() {
+  if (!confirm('Clear all stored API keys?')) return;
+  ['shodan', 'greynoise', 'vuldb', 'fullhunt', 'zap', 'zap_url'].forEach(s => {
+    localStorage.removeItem('rt-apikey-' + s);
+  });
+  document.querySelectorAll('.api-key-input').forEach(el => el.value = '');
+  loadApiKeyUI();
+}
+
+// ══════════════════════════════════════════════
+// SHODAN FULL API
+// ══════════════════════════════════════════════
+async function runShodanQuery() {
+  const query = document.getElementById('shodan-query').value.trim();
+  const mode = document.getElementById('shodan-mode').value;
+  const container = document.getElementById('shodan-results');
+  const statusEl = document.getElementById('shodan-api-status');
+
+  if (!query) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter an IP address or search query.</div>';
+    return;
+  }
+
+  const apiKey = getApiKey('shodan');
+  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying Shodan...</div>';
+
+  if (!apiKey) {
+    statusEl.innerHTML = '<span style="color:var(--yellow)">No API key configured. Using free InternetDB fallback (limited data).</span>';
+    try {
+      let ip = query;
+      if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(query)) {
+        const dnsResp = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(query) + '&type=A');
+        if (dnsResp.ok) {
+          const dnsData = await dnsResp.json();
+          if (dnsData.Answer && dnsData.Answer.length > 0) ip = dnsData.Answer[0].data;
+          else throw new Error('Could not resolve domain to IP');
+        }
+      }
+      const resp = await fetch('https://internetdb.shodan.io/' + encodeURIComponent(ip));
+      if (!resp.ok) throw new Error('No data found in InternetDB for this IP');
+      const data = await resp.json();
+      let html = '<div class="api-result-container">';
+      html += '<div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(String(data.ip || ip)) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Hostnames</span><span class="api-result-val">' + (data.hostnames || []).map(h => '<span class="api-tag">' + escapeHtml(h) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Open Ports</span><span class="api-result-val">' + (data.ports || []).map(p => '<span class="api-tag">' + p + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Vulnerabilities</span><span class="api-result-val">' + (data.vulns || []).map(v => '<span class="api-tag danger">' + escapeHtml(v) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">CPEs</span><span class="api-result-val">' + (data.cpes || []).map(c => '<span class="api-tag">' + escapeHtml(c) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Tags</span><span class="api-result-val">' + (data.tags || []).map(t => '<span class="api-tag warn">' + escapeHtml(t) + '</span>').join(' ') + '</span></div>';
+      html += '</div>';
+      html += '<div style="padding:8px;font-size:10px;color:var(--text-dim);font-family:\'Share Tech Mono\',monospace;margin-top:6px">Source: Shodan InternetDB (free, no API key required). Add your API key for detailed results.</div>';
+      container.innerHTML = html;
+    } catch (err) {
+      container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+    }
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:var(--neon)">Using Shodan API key</span>';
+
+  try {
+    let url;
+    if (mode === 'host') {
+      let ip = query;
+      if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(query)) {
+        const dnsResp = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(query) + '&type=A');
+        if (dnsResp.ok) {
+          const dnsData = await dnsResp.json();
+          if (dnsData.Answer && dnsData.Answer.length > 0) ip = dnsData.Answer[0].data;
+          else throw new Error('Could not resolve domain to IP');
+        }
+      }
+      url = 'https://api.shodan.io/shodan/host/' + encodeURIComponent(ip) + '?key=' + encodeURIComponent(apiKey);
+    } else {
+      url = 'https://api.shodan.io/shodan/host/search?key=' + encodeURIComponent(apiKey) + '&query=' + encodeURIComponent(query);
+    }
+
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.error || 'Shodan API returned status ' + resp.status);
+    }
+    const data = await resp.json();
+
+    if (mode === 'host') {
+      let html = '<div class="api-result-container">';
+      html += '<div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(String(data.ip_str || '')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Organization</span><span class="api-result-val">' + escapeHtml(String(data.org || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">ISP</span><span class="api-result-val">' + escapeHtml(String(data.isp || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">OS</span><span class="api-result-val">' + escapeHtml(String(data.os || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">ASN</span><span class="api-result-val">' + escapeHtml(String(data.asn || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Country</span><span class="api-result-val">' + escapeHtml(String(data.country_name || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">City</span><span class="api-result-val">' + escapeHtml(String(data.city || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Open Ports</span><span class="api-result-val">' + (data.ports || []).map(p => '<span class="api-tag">' + p + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Hostnames</span><span class="api-result-val">' + (data.hostnames || []).map(h => '<span class="api-tag">' + escapeHtml(h) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Vulnerabilities</span><span class="api-result-val">' + (data.vulns ? Object.keys(data.vulns).map(v => '<span class="api-tag danger">' + escapeHtml(v) + '</span>').join(' ') : 'None found') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Last Update</span><span class="api-result-val">' + escapeHtml(String(data.last_update || 'N/A')) + '</span></div>';
+      if (data.data && data.data.length > 0) {
+        html += '<div style="margin-top:12px;font-size:11px;color:var(--neon2);font-weight:700;letter-spacing:1px;text-transform:uppercase">Service Banners</div>';
+        data.data.slice(0, 10).forEach(svc => {
+          html += '<div style="margin-top:8px;padding:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:4px;font-size:11px">';
+          html += '<div style="color:var(--neon2)">Port ' + svc.port + '/' + (svc.transport || 'tcp') + ' - ' + escapeHtml(String(svc.product || svc._shodan?.module || 'unknown')) + '</div>';
+          if (svc.banner) html += '<pre style="margin-top:4px;color:var(--text-dim);white-space:pre-wrap;word-break:break-all;max-height:100px;overflow:auto;font-size:10px">' + escapeHtml(svc.banner.substring(0, 500)) + '</pre>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    } else {
+      const matches = data.matches || [];
+      if (matches.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No results found for this query.</div>';
+        return;
+      }
+      let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Total results: ' + (data.total || matches.length) + '</div>';
+      html += '<div class="api-result-container">';
+      matches.slice(0, 20).forEach(m => {
+        html += '<div style="padding:10px;border-bottom:1px solid var(--border)">';
+        html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--neon)">' + escapeHtml(String(m.ip_str)) + '</span><span class="api-tag">' + m.port + '/' + (m.transport || 'tcp') + '</span></div>';
+        html += '<div style="font-size:11px;color:var(--text-dim)">' + escapeHtml(String(m.org || '')) + ' | ' + escapeHtml(String(m.location?.country_name || '')) + '</div>';
+        if (m.product) html += '<div style="font-size:11px;color:var(--neon2);margin-top:2px">' + escapeHtml(String(m.product)) + (m.version ? ' ' + escapeHtml(String(m.version)) : '') + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Shodan API Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// GREYNOISE COMMUNITY API
+// ══════════════════════════════════════════════
+async function runGreyNoiseQuery() {
+  const ip = document.getElementById('greynoise-ip').value.trim();
+  const container = document.getElementById('greynoise-results');
+
+  if (!ip) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter an IP address.</div>';
+    return;
+  }
+
+  const apiKey = getApiKey('greynoise');
+  if (!apiKey) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please configure your GreyNoise API key in API Settings first.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying GreyNoise...</div>';
+
+  try {
+    const resp = await fetch('https://api.greynoise.io/v3/community/' + encodeURIComponent(ip), {
+      headers: { 'key': apiKey, 'Accept': 'application/json' }
+    });
+
+    if (!resp.ok) {
+      if (resp.status === 404) {
+        container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(ip) + '</span></div><div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag success">Not found in GreyNoise — IP is not a known mass-scanner</span></span></div></div>';
+        return;
+      }
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.message || 'GreyNoise returned status ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const classificationColors = { 'malicious': 'danger', 'benign': 'success', 'unknown': 'warn' };
+    const classTag = classificationColors[data.classification] || '';
+
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(String(data.ip || ip)) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Noise</span><span class="api-result-val"><span class="api-tag ' + (data.noise ? 'warn' : 'success') + '">' + (data.noise ? 'Yes — Mass Scanner' : 'No') + '</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">RIOT</span><span class="api-result-val"><span class="api-tag ' + (data.riot ? 'success' : '') + '">' + (data.riot ? 'Yes — Known Benign Service' : 'No') + '</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Classification</span><span class="api-result-val"><span class="api-tag ' + classTag + '">' + escapeHtml(String(data.classification || 'unknown')) + '</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Name</span><span class="api-result-val">' + escapeHtml(String(data.name || 'N/A')) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Last Seen</span><span class="api-result-val">' + escapeHtml(String(data.last_seen || 'N/A')) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Message</span><span class="api-result-val">' + escapeHtml(String(data.message || 'N/A')) + '</span></div>';
+    if (data.link) {
+      html += '<div class="api-result-row"><span class="api-result-key">Details</span><span class="api-result-val"><a href="' + escapeHtml(data.link) + '" target="_blank" rel="noopener" style="color:var(--neon2);text-decoration:underline">View on GreyNoise</a></span></div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">GreyNoise Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// VULDB API
+// ══════════════════════════════════════════════
+async function runVulDBQuery() {
+  const query = document.getElementById('vuldb-query').value.trim();
+  const container = document.getElementById('vuldb-results');
+
+  if (!query) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a CVE ID or search keyword.</div>';
+    return;
+  }
+
+  const apiKey = getApiKey('vuldb');
+  if (!apiKey) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please configure your VulDB API key in API Settings first.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying VulDB...</div>';
+
+  try {
+    const isCVE = /^CVE-\d{4}-\d+$/i.test(query);
+    const body = isCVE ? 'search=' + encodeURIComponent(query) + '&details=1' : 'search=' + encodeURIComponent(query) + '&details=1';
+    const resp = await fetch('https://vuldb.com/?api', {
+      method: 'POST',
+      headers: {
+        'X-VulDB-ApiKey': apiKey,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body
+    });
+
+    if (!resp.ok) {
+      throw new Error('VulDB returned status ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const results = data.result || [];
+
+    if (results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No vulnerabilities found for "' + escapeHtml(query) + '".</div>';
+      return;
+    }
+
+    let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Found ' + results.length + ' result(s)</div>';
+    html += '<div class="api-result-container">';
+
+    results.slice(0, 15).forEach(item => {
+      const entry = item.entry || {};
+      const source = item.source || {};
+      const vuln = item.vulnerability || {};
+      const risk = item.advisory?.risk?.name || vuln.risk?.name || 'N/A';
+      const riskClass = risk.toLowerCase().includes('critical') || risk.toLowerCase().includes('high') ? 'danger' : risk.toLowerCase().includes('medium') ? 'warn' : 'success';
+
+      html += '<div style="padding:12px;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">';
+      html += '<span style="color:var(--neon);font-weight:700">' + escapeHtml(String(entry.title || 'Untitled')) + '</span>';
+      html += '<span class="api-tag ' + riskClass + '">' + escapeHtml(risk) + '</span>';
+      html += '</div>';
+      if (source.cve?.id) html += '<div style="font-size:11px;color:var(--neon2);margin-bottom:4px">CVE: ' + escapeHtml(String(source.cve.id)) + '</div>';
+      if (entry.timestamp?.create) html += '<div style="font-size:10px;color:var(--text-dim)">Published: ' + escapeHtml(String(entry.timestamp.create)) + '</div>';
+      html += '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">VulDB Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// FULLHUNT API
+// ══════════════════════════════════════════════
+async function runFullHuntQuery() {
+  const domain = document.getElementById('fullhunt-domain').value.trim();
+  const mode = document.getElementById('fullhunt-mode').value;
+  const container = document.getElementById('fullhunt-results');
+
+  if (!domain) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a domain name.</div>';
+    return;
+  }
+
+  const apiKey = getApiKey('fullhunt');
+  if (!apiKey) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please configure your FullHunt API key in API Settings first.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Querying FullHunt...</div>';
+
+  try {
+    let url;
+    if (mode === 'subdomains') {
+      url = 'https://fullhunt.io/api/v1/domain/' + encodeURIComponent(domain) + '/subdomains';
+    } else {
+      url = 'https://fullhunt.io/api/v1/domain/' + encodeURIComponent(domain) + '/details';
+    }
+
+    const resp = await fetch(url, {
+      headers: { 'X-API-KEY': apiKey, 'Accept': 'application/json' }
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.message || errData.detail || 'FullHunt returned status ' + resp.status);
+    }
+
+    const data = await resp.json();
+
+    if (mode === 'subdomains') {
+      const hosts = data.hosts || [];
+      if (hosts.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No subdomains found for ' + escapeHtml(domain) + '.</div>';
+        return;
+      }
+      let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Found ' + hosts.length + ' subdomain(s) for ' + escapeHtml(domain) + '</div>';
+      html += '<div class="api-result-container">';
+      hosts.forEach(host => {
+        html += '<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--neon2)">' + escapeHtml(String(host)) + '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } else {
+      let html = '<div class="api-result-container">';
+      html += '<div class="api-result-row"><span class="api-result-key">Domain</span><span class="api-result-val">' + escapeHtml(String(data.domain || domain)) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Hosts Count</span><span class="api-result-val">' + (data.host_count || data.hosts?.length || 0) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val">' + escapeHtml(String(data.status || 'N/A')) + '</span></div>';
+      if (data.dns) {
+        html += '<div class="api-result-row"><span class="api-result-key">DNS</span><span class="api-result-val">' + (Array.isArray(data.dns) ? data.dns.map(d => '<span class="api-tag">' + escapeHtml(String(d)) + '</span>').join(' ') : escapeHtml(String(data.dns))) + '</span></div>';
+      }
+
+      if (data.hosts && Array.isArray(data.hosts) && data.hosts.length > 0) {
+        html += '<div style="margin-top:12px;font-size:11px;color:var(--neon2);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Discovered Hosts</div>';
+        data.hosts.slice(0, 25).forEach(host => {
+          if (typeof host === 'object') {
+            html += '<div style="padding:8px;border-bottom:1px solid var(--border);font-size:11px">';
+            html += '<div style="color:var(--neon)">' + escapeHtml(String(host.host || host.domain || '')) + '</div>';
+            if (host.ip_address) html += '<div style="color:var(--text-dim)">IP: ' + escapeHtml(String(host.ip_address)) + '</div>';
+            if (host.status_code) html += '<span class="api-tag">HTTP ' + host.status_code + '</span> ';
+            if (host.has_ipv6) html += '<span class="api-tag success">IPv6</span> ';
+            if (host.cloud?.provider) html += '<span class="api-tag">' + escapeHtml(String(host.cloud.provider)) + '</span>';
+            html += '</div>';
+          } else {
+            html += '<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--neon2)">' + escapeHtml(String(host)) + '</div>';
+          }
+        });
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">FullHunt Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// OWASP ZAP API
+// ══════════════════════════════════════════════
+function getZapUrl() {
+  return getApiKey('zap_url') || 'http://localhost:8080';
+}
+
+function switchZapTab(name) {
+  document.querySelectorAll('#zap-section .api-section-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#zap-section .api-tab-content').forEach(t => t.classList.remove('active'));
+  const tabs = ['status', 'spider', 'scan', 'alerts'];
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) {
+    document.querySelectorAll('#zap-section .api-section-tab')[idx].classList.add('active');
+    document.getElementById('zap-tab-' + name).classList.add('active');
+  }
+}
+
+let zapSpiderScanId = null;
+let zapActiveScanId = null;
+
+async function zapFetch(path) {
+  const base = getZapUrl();
+  const apiKey = getApiKey('zap');
+  const separator = path.includes('?') ? '&' : '?';
+  const url = base + path + (apiKey ? separator + 'apikey=' + encodeURIComponent(apiKey) : '');
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('ZAP returned status ' + resp.status);
+  return resp.json();
+}
+
+async function checkZapStatus() {
+  const container = document.getElementById('zap-status-results');
+  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Connecting to ZAP...</div>';
+  try {
+    const data = await zapFetch('/JSON/core/view/version/');
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag success">Connected</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Version</span><span class="api-result-val">' + escapeHtml(String(data.version || 'Unknown')) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">ZAP URL</span><span class="api-result-val">' + escapeHtml(getZapUrl()) + '</span></div>';
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag danger">Connection Failed</span></span></div><div class="api-result-row"><span class="api-result-key">Error</span><span class="api-result-val">' + escapeHtml(String(err.message)) + '</span></div><div class="api-result-row"><span class="api-result-key">Tip</span><span class="api-result-val">Ensure ZAP is running and the API is enabled. Check your ZAP URL and API key in API Settings.</span></div></div>';
+  }
+}
+
+async function startZapSpider() {
+  const url = document.getElementById('zap-spider-url').value.trim();
+  const container = document.getElementById('zap-spider-results');
+  if (!url) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a target URL.</div>';
+    return;
+  }
+  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Starting spider...</div>';
+  try {
+    const data = await zapFetch('/JSON/spider/action/scan/?url=' + encodeURIComponent(url));
+    zapSpiderScanId = data.scan;
+    container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Spider Started</span><span class="api-result-val"><span class="api-tag success">Scan ID: ' + escapeHtml(String(zapSpiderScanId)) + '</span></span></div><div class="api-result-row"><span class="api-result-key">Target</span><span class="api-result-val">' + escapeHtml(url) + '</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Click "Check Progress" to monitor the spider status.</div>';
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+async function getZapSpiderStatus() {
+  const container = document.getElementById('zap-spider-results');
+  if (!zapSpiderScanId) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No spider scan running. Start a spider first.</div>';
+    return;
+  }
+  try {
+    const status = await zapFetch('/JSON/spider/view/status/?scanId=' + zapSpiderScanId);
+    const results = await zapFetch('/JSON/spider/view/results/?scanId=' + zapSpiderScanId);
+    const urls = results.results || [];
+    const progress = status.status || '0';
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">Progress</span><span class="api-result-val"><span class="api-tag ' + (progress === '100' ? 'success' : 'warn') + '">' + progress + '%</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">URLs Found</span><span class="api-result-val">' + urls.length + '</span></div>';
+    if (urls.length > 0) {
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--neon2);font-weight:700;text-transform:uppercase;letter-spacing:1px">Discovered URLs</div>';
+      urls.slice(0, 50).forEach(u => {
+        html += '<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;color:var(--text);word-break:break-all">' + escapeHtml(String(u)) + '</div>';
+      });
+      if (urls.length > 50) html += '<div style="padding:6px 0;font-size:11px;color:var(--text-dim)">... and ' + (urls.length - 50) + ' more URLs</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+async function startZapActiveScan() {
+  const url = document.getElementById('zap-scan-url').value.trim();
+  const container = document.getElementById('zap-scan-results');
+  if (!url) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Please enter a target URL.</div>';
+    return;
+  }
+  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Starting active scan...</div>';
+  try {
+    const data = await zapFetch('/JSON/ascan/action/scan/?url=' + encodeURIComponent(url));
+    zapActiveScanId = data.scan;
+    container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Active Scan Started</span><span class="api-result-val"><span class="api-tag success">Scan ID: ' + escapeHtml(String(zapActiveScanId)) + '</span></span></div><div class="api-result-row"><span class="api-result-key">Target</span><span class="api-result-val">' + escapeHtml(url) + '</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Click "Check Progress" to monitor the scan.</div>';
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+async function getZapScanStatus() {
+  const container = document.getElementById('zap-scan-results');
+  if (!zapActiveScanId) {
+    container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No active scan running. Start a scan first.</div>';
+    return;
+  }
+  try {
+    const status = await zapFetch('/JSON/ascan/view/status/?scanId=' + zapActiveScanId);
+    const progress = status.status || '0';
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">Progress</span><span class="api-result-val"><span class="api-tag ' + (progress === '100' ? 'success' : 'warn') + '">' + progress + '%</span></span></div>';
+    html += '</div>';
+    if (progress === '100') {
+      html += '<div style="font-size:11px;color:var(--neon);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Scan complete! Switch to the Alerts tab to view findings.</div>';
+    }
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+async function getZapAlerts() {
+  const baseUrl = document.getElementById('zap-alerts-url').value.trim();
+  const container = document.getElementById('zap-alerts-results');
+  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Fetching alerts...</div>';
+  try {
+    const path = baseUrl ? '/JSON/core/view/alerts/?baseurl=' + encodeURIComponent(baseUrl) : '/JSON/core/view/alerts/';
+    const data = await zapFetch(path);
+    const alerts = data.alerts || [];
+    if (alerts.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No alerts found.' + (baseUrl ? ' Try clearing the URL filter.' : '') + '</div>';
+      return;
+    }
+
+    const riskLevels = { '3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational' };
+    const riskColors = { '3': 'danger', '2': 'warn', '1': '', '0': 'success' };
+    let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Found ' + alerts.length + ' alert(s)</div>';
+    html += '<div class="api-result-container">';
+    alerts.slice(0, 50).forEach(a => {
+      const risk = riskLevels[a.risk] || a.risk;
+      const riskColor = riskColors[a.risk] || '';
+      html += '<div style="padding:10px;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px"><span style="color:var(--neon);font-weight:600">' + escapeHtml(String(a.alert || a.name || '')) + '</span><span class="api-tag ' + riskColor + '">' + escapeHtml(risk) + '</span></div>';
+      html += '<div style="font-size:10px;color:var(--text-dim);word-break:break-all;margin-bottom:2px">' + escapeHtml(String(a.url || '')) + '</div>';
+      if (a.description) html += '<div style="font-size:10px;color:var(--text);margin-top:4px;line-height:1.4">' + escapeHtml(String(a.description).substring(0, 200)) + '</div>';
+      if (a.solution) html += '<div style="font-size:10px;color:var(--neon2);margin-top:4px"><strong>Fix:</strong> ' + escapeHtml(String(a.solution).substring(0, 200)) + '</div>';
+      html += '</div>';
+    });
+    if (alerts.length > 50) html += '<div style="padding:10px;font-size:11px;color:var(--text-dim)">... and ' + (alerts.length - 50) + ' more alerts</div>';
+    html += '</div>';
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Error: ' + escapeHtml(String(err.message)) + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 function initApp() {
@@ -2539,6 +3548,7 @@ function initApp() {
   buildCommand();
   generateRevShell();
   loadNotes();
+  loadApiKeyUI();
 }
 
 initApp();
