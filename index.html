@@ -1550,10 +1550,15 @@ async function runAnalysis() {
   const spinner = document.getElementById('scan-spinner');
   spinner.style.display = 'block';
 
-  const intel = await fetchPassiveIntel(parsed);
-  spinner.style.display = 'none';
-  populateResults(parsed, intel);
-  status.textContent = `Analysis complete for ${parsed.host}.`;
+  try {
+    const intel = await fetchPassiveIntel(parsed);
+    spinner.style.display = 'none';
+    populateResults(parsed, intel);
+    status.textContent = `Analysis complete for ${parsed.host}.`;
+  } catch (err) {
+    spinner.style.display = 'none';
+    status.textContent = `Analysis failed for ${parsed.host}: ${err.message || 'Unknown error'}`;
+  }
 }
 
 async function fetchPassiveIntel(parsed) {
@@ -1608,7 +1613,7 @@ async function fetchPassiveIntel(parsed) {
 
   // IP Geolocation
   const resolvedIP = result.dns['A']?.[0]?.data;
-  if (resolvedIP) {
+  if (resolvedIP && /^(\d{1,3}\.){3}\d{1,3}$/.test(resolvedIP)) {
     try {
       const geoResp = await fetch(`https://ipapi.co/${resolvedIP}/json/`);
       if (geoResp.ok) result.geo = await geoResp.json();
@@ -2154,7 +2159,7 @@ function exportNotes() {
   const blob = new Blob([`RedTeam Operator Notes\nExported: ${new Date().toISOString()}\n${'='.repeat(50)}\n\n${content}`], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `op-notes-${new Date().toISOString().split('T')[0]}.txt`;
+  a.download = `op-notes-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -2238,7 +2243,7 @@ function exportReport() {
   const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `redteam-report-${new Date().toISOString().split('T')[0]}.txt`;
+  a.download = `redteam-report-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
