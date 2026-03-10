@@ -74,7 +74,7 @@ export default function Home() {
         {/* Content */}
         <div className="p-4 md:p-6 max-w-7xl mx-auto">
           {activeSection === 'dashboard' && <Dashboard onNavigate={navigate} />}
-          {activeSection === 'threat-intel' && <ThreatIntelligence />}
+          {activeSection === 'threat-intel' && <ThreatIntelligence onNavigate={navigate} />}
           {activeSection === 'ioc-manager' && <IOCManager />}
           {activeSection === 'incident-response' && <IncidentResponse />}
           {activeSection === 'threat-hunting' && <ThreatHunting />}
