@@ -79,9 +79,15 @@ export function htmlEncode(str: string): string {
 }
 
 export function htmlDecode(str: string): string {
-  const txt = document.createElement('textarea')
-  txt.innerHTML = str
-  return txt.value
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&#47;/g, '/')
 }
 
 export function binaryEncode(str: string): string {
@@ -259,7 +265,7 @@ export function lsGet<T>(key: string, fallback: T): T {
 
 export function lsSet(key: string, value: unknown) {
   if (typeof window === 'undefined') return
-  try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
+  try { localStorage.setItem(key, JSON.stringify(value)) } catch (e) { console.error('localStorage write error:', e) }
 }
 
 // ── API request wrapper ────────────────────────────────────

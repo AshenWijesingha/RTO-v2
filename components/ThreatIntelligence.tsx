@@ -15,7 +15,7 @@ interface ResultSection {
   data: Record<string, string | number | boolean | null>
 }
 
-export default function ThreatIntelligence() {
+export default function ThreatIntelligence({ onNavigate }: { onNavigate?: (section: string) => void }) {
   const [target, setTarget] = useState('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<ResultSection[]>([])
@@ -68,7 +68,7 @@ export default function ThreatIntelligence() {
               })
             }
           }
-        } catch {}
+        } catch (e) { console.error("Analysis error:", e) }
 
         // ── AbuseIPDB (requires API key) ──
         if (apiKeys.abuseipdb) {
@@ -97,7 +97,7 @@ export default function ThreatIntelligence() {
                 }
               })
             }
-          } catch {}
+          } catch (e) { console.error("Analysis error:", e) }
         } else {
           sections.push({
             title: '🚨 AbuseIPDB Reputation',
@@ -130,7 +130,7 @@ export default function ThreatIntelligence() {
                 }
               })
             }
-          } catch {}
+          } catch (e) { console.error("Analysis error:", e) }
         }
       }
 
@@ -160,7 +160,7 @@ export default function ThreatIntelligence() {
               }
             })
           }
-        } catch {}
+        } catch (e) { console.error("Analysis error:", e) }
 
         // DNS records
         try {
@@ -175,12 +175,12 @@ export default function ThreatIntelligence() {
                   dnsResults[type] = data.Answer.map((a: { data: string }) => a.data).join(' | ')
                 }
               }
-            } catch {}
+            } catch (e) { console.error("Analysis error:", e) }
           }))
           if (Object.keys(dnsResults).length) {
             sections.push({ title: '📡 DNS Records (Google DNS)', data: dnsResults })
           }
-        } catch {}
+        } catch (e) { console.error("Analysis error:", e) }
       }
 
       // ── Hash lookup ──
@@ -217,7 +217,7 @@ export default function ThreatIntelligence() {
               })
             }
           }
-        } catch {}
+        } catch (e) { console.error("Analysis error:", e) }
 
         // VirusTotal hash lookup
         if (apiKeys.virustotal) {
@@ -246,7 +246,7 @@ export default function ThreatIntelligence() {
                 }
               })
             }
-          } catch {}
+          } catch (e) { console.error("Analysis error:", e) }
         }
       }
 
@@ -277,7 +277,7 @@ export default function ThreatIntelligence() {
                 }
               })
             }
-          } catch {}
+          } catch (e) { console.error("Analysis error:", e) }
         } else {
           sections.push({
             title: '🔗 URL Analysis',
@@ -310,7 +310,7 @@ export default function ThreatIntelligence() {
               })
             }
           }
-        } catch {}
+        } catch (e) { console.error("Analysis error:", e) }
       }
 
       if (sections.length === 0) {
@@ -414,7 +414,7 @@ export default function ThreatIntelligence() {
         <div className="text-xs text-blue-200">
           <strong>Data Sources:</strong> ip-api.com (free, no key), AbuseIPDB (API key required), Shodan (API key required),
           VirusTotal (API key required), MalwareBazaar (free), URLhaus (free), RDAP (free).
-          Add your API keys in the <button onClick={() => {}} className="underline">Settings</button> section for full functionality.
+          Add your API keys in the <button onClick={() => onNavigate?.('settings')} className="underline">Settings</button> section for full functionality.
         </div>
       </div>
     </div>
