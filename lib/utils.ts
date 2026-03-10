@@ -80,7 +80,6 @@ export function htmlEncode(str: string): string {
 
 export function htmlDecode(str: string): string {
   return str
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
@@ -88,6 +87,7 @@ export function htmlDecode(str: string): string {
     .replace(/&#39;/g, "'")
     .replace(/&#x2F;/g, '/')
     .replace(/&#47;/g, '/')
+    .replace(/&amp;/g, '&')
 }
 
 export function binaryEncode(str: string): string {
