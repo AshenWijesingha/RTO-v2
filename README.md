@@ -1,66 +1,137 @@
-# Red Team Operator Cyber Dashboard v2 (Static GitHub Pages Build)
+# Blue Team Cyber Dashboard v2
 
-A single-file, front-end cyber intelligence dashboard designed for **authorized** security assessments, education, and reporting workflows.
+A professional Blue Team Cyber Security Dashboard built with **Next.js 15** and **TypeScript**. Designed for authorized security assessments, threat analysis, incident response, and reporting workflows.
 
 ## ⚠️ Important Scope & Ethics
 
 This project is for authorized penetration testing and cybersecurity research only.
-Unauthorized scanning of systems without explicit permission is illegal.
-
-Because this application is intentionally **backend-free** (for GitHub Pages hosting), browser security constraints apply:
-
-- No raw socket access from JavaScript (cannot perform true SYN/TCP/UDP port scanning like Nmap).
-- CORS and target policies can block header/status inspection for many domains.
-- Some panels use best-effort passive/public endpoints where available and degrade gracefully when blocked.
+Unauthorized use of any scanning or intelligence-gathering features against systems without explicit permission is illegal.
 
 ## Features
 
-- Dark neon cyberpunk UI with glassmorphism and matrix canvas animation.
-- Target Analysis Panel with tabbed intelligence views:
-  - Domain parsing + TLD/subdomain extraction
-  - Passive DNS queries (Google DNS JSON API)
-  - SSL/TLS summary with browser-safe constraints
-  - Port panel UI (intel/demo-based status)
-  - WHOIS/RDAP lookup (domain)
-  - Security headers checklist UI
-  - HTTP inspector (best effort, CORS-permitting)
-  - Technology detection panel (static guidance)
-- Red Team Lifecycle collapsible knowledge base.
-- Nmap command library with copy buttons + "Copied" feedback.
-- Enumeration script library with copy buttons.
-- Live search + dynamic highlight.
-- Smart Nmap command builder.
-- Terminal mode modal (`help` supported).
-- Theme switcher (Green / Purple / Blue).
-- Interactive checklist with localStorage persistence + progress bar + reset.
-- Scroll progress line and responsive sidebar/hamburger menu.
+- **Dark neon cyberpunk UI** with glassmorphism design and Tailwind CSS
+- **Dashboard** — overview of IOCs, incidents, and quick-action shortcuts
+- **Threat Intelligence** — IP/domain analysis, DNS lookups, WHOIS/RDAP
+- **IOC Manager** — add, tag, search, and export indicators of compromise
+- **Incident Response** — track and manage security incidents through lifecycle
+- **Threat Hunting** — hypothesis-based hunting with MITRE ATT&CK mapping
+- **SIEM Query Builder** — generate KQL, SPL, and Sigma queries
+- **Vulnerability Management** — CVSSv3 scoring, CVE tracking, remediation
+- **Log Analysis** — parse and search log entries with pattern detection
+- **Network Analysis** — network topology tools and packet analysis helpers
+- **Security Checklists** — customizable security hardening checklists
+- **Encode / Decode** — Base64, Hex, URL, ROT13, Binary, and hash detection
+- **Report Generator** — compile findings into professional security reports
+- **Settings** — theme customization and persistent preferences via localStorage
+
+## Tech Stack
+
+- [Next.js 15](https://nextjs.org/) — React framework with static export
+- [TypeScript](https://www.typescriptlang.org/) — type-safe components
+- [Tailwind CSS](https://tailwindcss.com/) — utility-first styling
+- Deployed on **GitHub Pages** via GitHub Actions
 
 ## Project Structure
 
-This repository intentionally contains only:
-
-- `index.html` — complete application (HTML/CSS/JS in one file)
-- `README.md`
+```
+.
+├── app/                   # Next.js App Router
+│   ├── globals.css        # Global styles and CSS variables
+│   ├── layout.tsx         # Root HTML layout and metadata
+│   └── page.tsx           # Main page with section routing
+├── components/            # Feature-level React components
+│   ├── Dashboard.tsx
+│   ├── ThreatIntelligence.tsx
+│   ├── IOCManager.tsx
+│   ├── IncidentResponse.tsx
+│   ├── ThreatHunting.tsx
+│   ├── SIEMQueryBuilder.tsx
+│   ├── VulnerabilityManagement.tsx
+│   ├── LogAnalysis.tsx
+│   ├── NetworkAnalysis.tsx
+│   ├── SecurityChecklists.tsx
+│   ├── EncodeDecode.tsx
+│   ├── ReportGenerator.tsx
+│   ├── Navigation.tsx
+│   └── Settings.tsx
+├── lib/
+│   └── utils.ts           # Shared utilities (encoding, localStorage, CVSS, etc.)
+├── .github/
+│   └── workflows/
+│       └── deploy.yml     # GitHub Actions — build and deploy to GitHub Pages
+├── next.config.js         # Next.js static export configuration
+├── tailwind.config.js
+└── tsconfig.json
+```
 
 ## Run Locally
 
-Open `index.html` directly in your browser, or run a static file server:
-
 ```bash
-python -m http.server 8080
+npm install
+npm run dev
 ```
 
-Then visit `http://localhost:8080`.
+Then visit `http://localhost:3000`.
+
+## Build for Production
+
+```bash
+npm run build
+```
+
+Static output is generated in the `out/` directory.
 
 ## Deploy to GitHub Pages
 
+The project is automatically deployed via GitHub Actions on every push to `main`.
+
+### Manual Setup
+
 1. Push repository to GitHub.
 2. Go to **Settings → Pages**.
-3. Under **Build and deployment**, set Source to **Deploy from a branch**.
-4. Select your branch (e.g., `main`) and `/ (root)` folder.
-5. Save and wait for deployment.
+3. Under **Build and deployment**, set Source to **GitHub Actions**.
+4. Push to `main` — the workflow in `.github/workflows/deploy.yml` will build and deploy automatically.
+
+The live site will be available at:
+```
+https://<your-username>.github.io/RTO-v2/
+```
+
+### Environment Variables
+
+The `NEXT_PUBLIC_BASE_PATH` variable is set automatically in the workflow to `/RTO-v2` (matching the repo name) so assets are correctly served from GitHub Pages.
+
+## API Keys (Optional)
+
+Some threat intelligence features can use external APIs. Create a local `api-keys.json` file (see the structure below) and fill in your keys. **Never commit `api-keys.json` to the repository** — it is listed in `.gitignore`.
+
+```json
+{
+  "shodan": "<your-shodan-api-key>",
+  "vuldb": "<your-vuldb-api-key>",
+  "greynoise": "<your-greynoise-api-key>",
+  "fullhunt": "<your-fullhunt-api-key>",
+  "zap": {
+    "url": "http://localhost:8080",
+    "apiKey": "<your-zap-api-key>"
+  }
+}
+```
+
+| Service     | Usage |
+|-------------|-------|
+| Shodan      | Internet-connected device search |
+| GreyNoise   | IP reputation and noise classification |
+| FullHunt    | Attack surface discovery |
+| VulDB       | Vulnerability database lookups |
 
 ## Notes for Real-World Operations
 
-If you need real active scanning and reliable scanning telemetry, pair this UI with a dedicated authorized backend/API gateway under your control and strict legal scope.
+Because this application runs entirely in the browser (no backend), browser security constraints apply:
+
+- CORS policies may block direct API calls to some external services.
+- No raw socket access from JavaScript (cannot perform true TCP/UDP port scanning like Nmap).
+- Some panels provide best-effort passive lookups using public endpoints and degrade gracefully when blocked.
+
+If you need real active scanning and reliable telemetry, pair this UI with a dedicated authorized backend/API gateway under your control and strict legal scope.
 

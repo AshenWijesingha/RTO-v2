@@ -33,3 +33,6 @@ yarn-error.log*
 # Temp files
 tmp/
 temp/
+
+# API keys (never commit real keys)
+api-keys.json
