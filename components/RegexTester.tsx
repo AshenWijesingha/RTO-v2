@@ -392,7 +392,7 @@ export default function RegexTester() {
                 style={{ lineHeight: '1.8' }}
                 dangerouslySetInnerHTML={{
                   __html: highlightedText.replace(
-                    /<mark key=\d+>/g,
+                    /<mark>/g,
                     '<span style="background:rgba(0,212,255,0.25);color:#00d4ff;border-radius:2px;padding:1px 3px;border:1px solid rgba(0,212,255,0.4);">'
                   ).replace(/<\/mark>/g, '</span>')
                 }}

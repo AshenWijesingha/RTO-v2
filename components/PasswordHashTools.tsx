@@ -127,7 +127,8 @@ function md5(input: string): string {
   }
 
   // Convert UTF-8 string to byte string
-  const utf8Str = unescape(encodeURIComponent(input))
+  const utf8Bytes = new TextEncoder().encode(input)
+  const utf8Str = Array.from(utf8Bytes).map(b => String.fromCharCode(b)).join('')
   return binl2hex(binlMD5(str2binl(utf8Str), utf8Str.length * 8))
 }
 

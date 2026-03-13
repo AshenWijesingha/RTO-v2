@@ -110,7 +110,7 @@ export default function ReverseShellGenerator() {
   const [port, setPort] = useState('4444')
   const [encoding, setEncoding] = useState<EncodingOption>('none')
   const [shellBinary, setShellBinary] = useState<ShellBinary>('/bin/sh')
-  const [urlEncode, setUrlEncode] = useState(false)
+  const [useUrlEncoding, setUseUrlEncoding] = useState(false)
   const [listenerType, setListenerType] = useState<ListenerType>('nc')
   const [copied, setCopied] = useState('')
 
@@ -122,7 +122,7 @@ export default function ReverseShellGenerator() {
 
   const rawCommand = generateShellCommand(shellType, ip, port, shellBinary)
   let finalCommand = applyEncoding(rawCommand, encoding, shellType)
-  if (urlEncode && encoding !== 'url') {
+  if (useUrlEncoding && encoding !== 'url') {
     finalCommand = encodeURIComponent(finalCommand)
   }
 
@@ -202,12 +202,12 @@ export default function ReverseShellGenerator() {
         <div className="mt-3 flex items-center gap-2">
           <input
             type="checkbox"
-            id="urlEncode"
-            checked={urlEncode}
-            onChange={e => setUrlEncode(e.target.checked)}
+            id="useUrlEncoding"
+            checked={useUrlEncoding}
+            onChange={e => setUseUrlEncoding(e.target.checked)}
             className="accent-blue-500"
           />
-          <label htmlFor="urlEncode" className="text-xs text-gray-400 cursor-pointer">URL Encode command</label>
+          <label htmlFor="useUrlEncoding" className="text-xs text-gray-400 cursor-pointer">URL Encode command</label>
         </div>
       </div>
 
@@ -227,7 +227,7 @@ export default function ReverseShellGenerator() {
       </div>
 
       {/* Bash -c variant for bash type */}
-      {shellType === 'bash' && encoding === 'none' && !urlEncode && (
+      {shellType === 'bash' && encoding === 'none' && !useUrlEncoding && (
         <div className="card">
           <div className="flex items-center justify-between mb-2">
             <span className="card-title">Bash -c Variant</span>
