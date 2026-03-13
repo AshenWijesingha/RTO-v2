@@ -219,8 +219,8 @@ export default function RegexTester() {
         if (lastEnd < testString.length) {
           parts.push({ text: testString.slice(lastEnd), isMatch: false })
         }
-        highlighted = parts.map((p, i) =>
-          p.isMatch ? `<mark key=${i}>${escapeHtml(p.text)}</mark>` : escapeHtml(p.text)
+        highlighted = parts.map(p =>
+          p.isMatch ? `<mark>${escapeHtml(p.text)}</mark>` : escapeHtml(p.text)
         ).join('')
       } else {
         highlighted = escapeHtml(testString)
@@ -228,7 +228,7 @@ export default function RegexTester() {
 
       // Compute replace result
       let replResult = ''
-      if (replacement !== undefined) {
+      if (replacement) {
         try {
           const replRegex = new RegExp(pattern, flagString)
           replResult = testString.replace(replRegex, replacement)
