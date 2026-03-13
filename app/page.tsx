@@ -15,6 +15,11 @@ import NetworkAnalysis from '@/components/NetworkAnalysis'
 import SecurityChecklists from '@/components/SecurityChecklists'
 import EncodeDecode from '@/components/EncodeDecode'
 import ReportGenerator from '@/components/ReportGenerator'
+import PhishingAnalyzer from '@/components/PhishingAnalyzer'
+import FirewallRuleGenerator from '@/components/FirewallRuleGenerator'
+import ReverseShellGenerator from '@/components/ReverseShellGenerator'
+import PasswordHashTools from '@/components/PasswordHashTools'
+import RegexTester from '@/components/RegexTester'
 import Settings from '@/components/Settings'
 
 export default function Home() {
@@ -87,6 +92,11 @@ export default function Home() {
           {activeSection === 'checklists' && <SecurityChecklists />}
           {activeSection === 'encode-decode' && <EncodeDecode />}
           {activeSection === 'report-generator' && <ReportGenerator />}
+          {activeSection === 'phishing-analyzer' && <PhishingAnalyzer />}
+          {activeSection === 'firewall-rules' && <FirewallRuleGenerator />}
+          {activeSection === 'reverse-shells' && <ReverseShellGenerator />}
+          {activeSection === 'password-tools' && <PasswordHashTools />}
+          {activeSection === 'regex-tester' && <RegexTester />}
           {activeSection === 'settings' && <Settings />}
         </div>
       </main>
