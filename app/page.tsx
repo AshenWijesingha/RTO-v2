@@ -8,6 +8,7 @@ import IOCManager from '@/components/IOCManager'
 import IncidentResponse from '@/components/IncidentResponse'
 import ThreatHunting from '@/components/ThreatHunting'
 import SIEMQueryBuilder from '@/components/SIEMQueryBuilder'
+import NmapQueryBuilder from '@/components/NmapQueryBuilder'
 import VulnerabilityManagement from '@/components/VulnerabilityManagement'
 import LogAnalysis from '@/components/LogAnalysis'
 import NetworkAnalysis from '@/components/NetworkAnalysis'
@@ -79,6 +80,7 @@ export default function Home() {
           {activeSection === 'incident-response' && <IncidentResponse />}
           {activeSection === 'threat-hunting' && <ThreatHunting />}
           {activeSection === 'siem-queries' && <SIEMQueryBuilder />}
+          {activeSection === 'nmap-builder' && <NmapQueryBuilder />}
           {activeSection === 'vulnerability' && <VulnerabilityManagement />}
           {activeSection === 'log-analysis' && <LogAnalysis />}
           {activeSection === 'network-analysis' && <NetworkAnalysis />}

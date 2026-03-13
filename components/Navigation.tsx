@@ -9,6 +9,7 @@ export type Section =
   | 'incident-response'
   | 'threat-hunting'
   | 'siem-queries'
+  | 'nmap-builder'
   | 'vulnerability'
   | 'log-analysis'
   | 'network-analysis'
@@ -31,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'incident-response', label: 'Incident Response', icon: '🚨', color: '#ffd700' },
   { id: 'threat-hunting', label: 'Threat Hunting', icon: '🎯', color: '#00ffcc' },
   { id: 'siem-queries', label: 'SIEM Query Builder', icon: '⚡', color: '#00d4ff' },
+  { id: 'nmap-builder', label: 'NMAP Query Builder', icon: '🔭', color: '#39ff14' },
   { id: 'vulnerability', label: 'Vulnerability Mgmt', icon: '🛡', color: '#ff6b35' },
   { id: 'log-analysis', label: 'Log Analysis', icon: '📋', color: '#00ffcc' },
   { id: 'network-analysis', label: 'Network Analysis', icon: '🌐', color: '#00d4ff' },
