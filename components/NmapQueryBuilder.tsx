@@ -52,6 +52,8 @@ interface HistoryEntry {
 }
 
 // ── Constants ──────────────────────────────────────────────
+const MAX_HISTORY_ENTRIES = 50
+
 const DEFAULT_CONFIG: NmapConfig = {
   target: '',
   scanType: '-sS',
@@ -353,7 +355,7 @@ function buildExplanation(c: NmapConfig): { flag: string; desc: string }[] {
 
   if (c.serviceDetection) {
     items.push({ flag: '-sV', desc: 'Probe open ports to determine service/version info' })
-    if (c.versionIntensity) items.push({ flag: `--version-intensity ${c.versionIntensity}`, desc: `Version detection intensity (0-9, higher = more probes, default 7)` })
+    if (c.versionIntensity) items.push({ flag: `--version-intensity ${c.versionIntensity}`, desc: `Version detection intensity (0=light, 9=all probes). Omit to use Nmap default (7)` })
   }
 
   if (c.osDetection) {
@@ -464,7 +466,7 @@ export default function NmapQueryBuilder() {
       timestamp: new Date().toISOString(),
       label: config.target || 'untitled',
     }
-    const updated = [entry, ...history].slice(0, 50)
+    const updated = [entry, ...history].slice(0, MAX_HISTORY_ENTRIES)
     setHistory(updated)
     lsSet('bt_nmap_history', updated)
   }
