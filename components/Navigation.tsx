@@ -16,6 +16,11 @@ export type Section =
   | 'checklists'
   | 'encode-decode'
   | 'report-generator'
+  | 'phishing-analyzer'
+  | 'firewall-rules'
+  | 'reverse-shells'
+  | 'password-tools'
+  | 'regex-tester'
   | 'settings'
 
 interface NavItem {
@@ -36,6 +41,11 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'vulnerability', label: 'Vulnerability Mgmt', icon: '🛡', color: '#ff6b35' },
   { id: 'log-analysis', label: 'Log Analysis', icon: '📋', color: '#00ffcc' },
   { id: 'network-analysis', label: 'Network Analysis', icon: '🌐', color: '#00d4ff' },
+  { id: 'phishing-analyzer', label: 'Phishing Analyzer', icon: '📧', color: '#ff4444' },
+  { id: 'firewall-rules', label: 'Firewall Rules', icon: '🔥', color: '#ffd700' },
+  { id: 'reverse-shells', label: 'Reverse Shells', icon: '💀', color: '#ff0055' },
+  { id: 'password-tools', label: 'Password & Hash', icon: '🔐', color: '#a855f7' },
+  { id: 'regex-tester', label: 'Regex Tester', icon: '🔣', color: '#00ffcc' },
   { id: 'checklists', label: 'Security Checklists', icon: '✓', color: '#39ff14' },
   { id: 'encode-decode', label: 'Encode / Decode', icon: '⚙', color: '#a0b3c8' },
   { id: 'report-generator', label: 'Report Generator', icon: '📄', color: '#00d4ff' },
@@ -72,7 +82,7 @@ export default function Navigation({ active, onNavigate, sidebarOpen, onToggle }
               🛡
             </div>
             <div>
-              <div className="matrix-header text-xs font-bold text-blue-400">BLUE TEAM</div>
+              <div className="matrix-header text-xs font-bold text-blue-400">SECURITY OPS</div>
               <div className="text-xs text-gray-500">Cyber Dashboard v2</div>
             </div>
           </div>
