@@ -59,7 +59,6 @@ const TEMPLATES: QueryTemplate[] = [
 FROM events
 WHERE LOGSOURCETYPENAME(logsourceid) ILIKE '%Windows%'
   AND "EventID" = '4625'
-  AND INOFFENSE(eventcount) > 0
 GROUP BY sourceip, username, destinationip
 HAVING COUNT(*) > 5
 ORDER BY event_count DESC
@@ -903,7 +902,7 @@ const PLATFORM_LABELS: Record<Platform, { name: string; color: string }> = {
   kql: { name: 'KQL (Azure Sentinel)', color: '#00d4ff' },
   qradar: { name: 'IBM QRadar (AQL)', color: '#be95ff' },
   logscale: { name: 'CrowdStrike LogScale', color: '#ff4444' },
-  sigma: { name: 'Sigma Rules', color: '#39ff14' },
+  sigma: { name: 'Sigma Rules', color: '#4ade80' },
   chronicle: { name: 'Google Chronicle (YARA-L)', color: '#4ecdc4' },
   xql: { name: 'Palo Alto Cortex XDR (XQL)', color: '#ff8c42' },
 }
