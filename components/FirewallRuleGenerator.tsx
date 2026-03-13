@@ -217,7 +217,7 @@ export default function FirewallRuleGenerator() {
     const filename = `firewall-rules${ext}`
     let content = bulkRules
     if (ext === '.sh') {
-      content = `#!/bin/bash\n# Generated firewall rules - ${new Date().toISOString()}\n\n${bulkRules}`
+      content = `#!/bin/bash\nset -euo pipefail\n# Generated firewall rules - ${new Date().toISOString()}\n\n${bulkRules}`
     } else if (ext === '.ps1') {
       content = `# Generated firewall rules - ${new Date().toISOString()}\n\n${bulkRules}`
     }
