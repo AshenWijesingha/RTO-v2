@@ -31,6 +31,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (s: string) => v
     { label: 'New Incident', icon: '🚨', section: 'incident-response', color: '#ffd700' },
     { label: 'Threat Hunt', icon: '🎯', section: 'threat-hunting', color: '#00ffcc' },
     { label: 'Build SIEM Query', icon: '⚡', section: 'siem-queries', color: '#00d4ff' },
+    { label: 'Build Nmap Scan', icon: '🔭', section: 'nmap-builder', color: '#39ff14' },
     { label: 'CVE Lookup', icon: '🛡', section: 'vulnerability', color: '#ff6b35' },
   ]
 
