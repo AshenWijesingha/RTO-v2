@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Configure GitHub Pages
@@ -35,6 +35,9 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /RTO-v2
+
+      - name: Add .nojekyll to disable Jekyll processing
+        run: touch ./out/.nojekyll
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
